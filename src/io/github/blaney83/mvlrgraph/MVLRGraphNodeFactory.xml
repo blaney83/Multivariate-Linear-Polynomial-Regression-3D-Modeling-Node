@@ -25,10 +25,9 @@
     </fullDescription>
     
     <ports>
-        <inPort index="0" name="In-Port name">Description of first input port...</inPort>
-        <!-- possibly more input ports here-->
-        <outPort index="0" name="Out-Port name">Description of first output port...</outPort>
-        <!-- possibly more output ports here-->
+        <inPort index="0" name="Regression Co-efficients Table">Takes in the output coefficient table produced by a regression node (linear/polynomial).</inPort>
+        <inPort index="1" name="Source Data Table">Takes in the data corresponding to the regression function produced in the regression node. Columns must match the output coeffiecients columns. Can either take the training data table (which was porocessed by the regression node) or the test data (for a visual representation of function "fitness").</inPort>
+        <outPort index="0" name="Out-Port name">Outputs the input data table (not the coefficient table).</outPort>
     </ports>    
     <views>
         <view index="0" name="name of first view">Description of first view...</view>
