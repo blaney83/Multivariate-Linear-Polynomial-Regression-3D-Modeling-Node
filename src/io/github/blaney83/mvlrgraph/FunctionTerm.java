@@ -1,15 +1,26 @@
 package io.github.blaney83.mvlrgraph;
 
+import java.io.IOException;
+
 import org.knime.core.data.DataColumnDomain;
 import org.knime.core.data.DoubleValue;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
 
 public class FunctionTerm {
-	private final String varName;
-	private final double coefficient;
+
+	private static String CFGKEY_TERM_NAME = "termName";
+	private static String CFGKEY_TERM_COEFF = "termCoeff";
+	private static String CFGKEY_TERM_EXP = "termExp";
+	private static String CFGKEY_TERM_CONSTANT = "isConst";
+	private static String CFGKEY_TERM_VALUE = "termVal";
+
+	private String varName;
+	private double coefficient;
 	private int exponent;
 	private boolean isConstant;
 	private double value;
-	private double mean;
 	private DataColumnDomain domain;
 
 	public FunctionTerm() {
@@ -41,12 +52,11 @@ public class FunctionTerm {
 			double value = Math.pow(coefficient, exponent);
 		}
 	}
-	
 
 	public double evaluateTerm(final double val) {
 		if (this.isConstant) {
 			return coefficient * (Math.pow(this.value, exponent));
-		}else {
+		} else {
 			return coefficient * (Math.pow(val, exponent));
 		}
 	}
@@ -55,8 +65,8 @@ public class FunctionTerm {
 		this.value = value;
 		this.isConstant = true;
 	}
-	
-	public void setDomain (final DataColumnDomain domain) {
+
+	public void setDomain(final DataColumnDomain domain) {
 		this.domain = domain;
 	}
 
@@ -79,13 +89,36 @@ public class FunctionTerm {
 	public double getValue() {
 		return this.value;
 	}
-	
-	public double getLowerBound () {
+
+	public double getLowerBound() {
 		return ((DoubleValue) this.domain.getLowerBound()).getDoubleValue();
 	}
-	
-	public double getUpperBound () {
+
+	public double getUpperBound() {
 		return ((DoubleValue) this.domain.getUpperBound()).getDoubleValue();
+	}
+
+	public void saveTo(final ModelContentWO modelContent) {
+		modelContent.addString(CFGKEY_TERM_NAME, this.varName);
+		modelContent.addDouble(CFGKEY_TERM_COEFF, this.coefficient);
+		modelContent.addInt(CFGKEY_TERM_EXP, this.exponent);
+		modelContent.addBoolean(CFGKEY_TERM_CONSTANT, this.isConstant);
+		modelContent.addDouble(CFGKEY_TERM_VALUE, this.value);
+		domain.save(modelContent);
+	}
+
+	@SuppressWarnings("static-access")
+	public void loadFrom(final ModelContentRO modelContent) {
+		try {
+		this.varName = modelContent.getString(CFGKEY_TERM_NAME);
+		this.coefficient = modelContent.getDouble(CFGKEY_TERM_COEFF);
+		this.exponent = modelContent.getInt(CFGKEY_TERM_EXP);
+		this.isConstant = modelContent.getBoolean(CFGKEY_TERM_CONSTANT);
+		this.value = modelContent.getDouble(CFGKEY_TERM_VALUE);
+		domain.load(modelContent);
+		}catch (InvalidSettingsException e) {
+			e.addSuppressed(new IOException("There was a problem loading the internal state of this node. Please reset the node and execute again."));
+		}
 	}
 
 	@Override

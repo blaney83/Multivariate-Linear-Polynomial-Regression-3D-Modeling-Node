@@ -1,27 +1,39 @@
 package io.github.blaney83.mvlrgraph;
 
+import java.io.IOException;
+
 import org.knime.core.data.RowKey;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
 
 import com.sun.rowset.internal.Row;
 
 public class CalculatedPoint {
-	private final double xValue;
-	private final double yValue;
-	private final double zValue;
+
+	private final static String CFGKEY_X_VAL = "xVal";
+	private final static String CFGKEY_Y_VAL = "yVal";
+	private final static String CFGKEY_Z_VAL = "zVal";
+	private final static String CFGKEY_ROW_KEY = "rowKey";
+	private final static String CFGKEY_MISSING = "isMissing";
+
+	private double xValue;
+	private double yValue;
+	private double zValue;
 	private RowKey rowKey;
 	private boolean isSelected;
 	private boolean isHilited;
-	private boolean isMissing = false;
-	
+	private boolean isMissing;
+
 	public CalculatedPoint() {
 		xValue = 0;
 		yValue = 0;
 		zValue = 0;
 		this.isSelected = false;
 		this.isHilited = false;
-		isMissing = true;
+		this.isMissing = true;
 	}
-	
+
 	public CalculatedPoint(final double xValue, final double yValue, final double zValue, final RowKey rowKey) {
 		this.xValue = xValue;
 		this.yValue = yValue;
@@ -46,9 +58,34 @@ public class CalculatedPoint {
 	public RowKey getRowKey() {
 		return rowKey;
 	}
-	
-	public boolean getIsMissing() {
+
+	public void saveTo(final ModelContentWO modelContent) {
+		modelContent.addDouble(CFGKEY_X_VAL, this.xValue);
+		modelContent.addDouble(CFGKEY_Y_VAL, this.yValue);
+		modelContent.addDouble(CFGKEY_Z_VAL, this.zValue);
+		modelContent.addRowKey(CFGKEY_ROW_KEY, this.rowKey);
+		modelContent.addBoolean(CFGKEY_MISSING, this.isMissing);
+	}
+
+	public void loadFrom(final ModelContentRO modelContent) {
+		try {
+			this.xValue = modelContent.getDouble(CFGKEY_X_VAL);
+			this.yValue = modelContent.getDouble(CFGKEY_Y_VAL);
+			this.zValue = modelContent.getDouble(CFGKEY_Z_VAL);
+			this.rowKey = modelContent.getRowKey(CFGKEY_ROW_KEY);
+			this.isMissing = modelContent.getBoolean(CFGKEY_MISSING);
+		} catch (InvalidSettingsException e) {
+			e.addSuppressed(new IOException(
+					"There was a problem loading the internal state of this node. Please reset the node and execute again."));
+		}
+	}
+
+	public boolean isMissing() {
 		return this.isMissing;
+	}
+
+	public void setMissing(final boolean isMissing) {
+		this.isMissing = isMissing;
 	}
 
 	public boolean isSelected() {
