@@ -1,6 +1,8 @@
 package io.github.blaney83.mvlrgraph;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -36,6 +38,9 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.ModelContent;
+import org.knime.core.node.ModelContentRO;
+import org.knime.core.node.ModelContentWO;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
@@ -55,20 +60,27 @@ public class MVLRGraphNodeModel extends NodeModel {
 	public static final int COEFFICIENT_IN_PORT = 0;
 	public static final int DATA_TABLE_IN_PORT = 1;
 
+	// Model Content File
+	private static final String FILE_NAME = "mvlrGraphInternals.xml";
+
 	// the logger instance
 	private static final NodeLogger logger = NodeLogger.getLogger(MVLRGraphNodeModel.class);
 
-	// internal settings fields
+	// internal config keys
 	static final String CFGKEY_COUNT = "count";
 	static final String CFGKEY_COL_NAME = "columnName";
 	static final String CFGKEY_X_AXIS_VAR_COLUMN = "xAxisVarColumn";
 	static final String CFGKEY_Y_AXIS_VAR_COLUMN = "yAxisVarColumn";
 	static final String CFGKEY_APPEND_CALCULATED_TARGET = "calculatedTarget";
-	static final String CFGKEY_APPROXIMATED_COLUMN_NAME = "APPROXCOL";
 	static final String CFGKEY_NUM_APPROX_COLUMN = "numApproxColumns";
 	static final String CFGKEY_IS_H2O_NODE = "isH2ONode";
 	// enum for intercept?
-
+	// save/load cfg keys
+	static final String INTERNAL_MODEL_NAME_KEY = "internalModel";
+	static final String INTERNAL_MODEL_NUM_FUNCTION_TERM_KEY = "numFnTerms";
+	static final String INTERNAL_MODEL_NUM_CALC_POINT_KEY= "numCalcPoints";
+	static final String INTERNAL_MODEL_TERM_KEY = "fnTerm";
+	static final String INTERNAL_MODEL_POINT_KEY = "calcPoint";
 	// if R^k=>R where k>2, then let them pick which columns to assign as mean
 	// values (leaving 2 columns for x and y), with z = R
 	// give options for mean values as the coefficients table displayed with the
@@ -83,8 +95,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// default settings fields
 	private static final int DEFAULT_COUNT = 100;
 	private static final boolean DEFAULT_APPEND_CALCULATED_TARGET = false;
-	private static final int DEFAULT_NUM_APPROX_COLUMN = 0;
 	private static final boolean DEFAULT_IS_H2O_NODE = false;
+
 	// settings model
 	private final SettingsModelIntegerBounded m_count = new SettingsModelIntegerBounded(MVLRGraphNodeModel.CFGKEY_COUNT,
 			MVLRGraphNodeModel.DEFAULT_COUNT, 0, Integer.MAX_VALUE);
@@ -93,30 +105,26 @@ public class MVLRGraphNodeModel extends NodeModel {
 	private final SettingsModelString m_yAxisVarColumn = new SettingsModelString(CFGKEY_Y_AXIS_VAR_COLUMN, "");
 	private final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
 			CFGKEY_APPEND_CALCULATED_TARGET, DEFAULT_APPEND_CALCULATED_TARGET);
-	private final SettingsModelIntegerBounded m_numApproxColumns = new SettingsModelIntegerBounded(
-			CFGKEY_NUM_APPROX_COLUMN, DEFAULT_NUM_APPROX_COLUMN, 0, Integer.MAX_VALUE);
 	private final SettingsModelBoolean m_isH2ONode = new SettingsModelBoolean(CFGKEY_IS_H2O_NODE, DEFAULT_IS_H2O_NODE);
 
-	// local model fields
-//	private DataPoint[] m_dataPoints;
-	// private RegressionFunction m_regFn;
-	protected Set<FunctionTerm> m_termSet;
-	protected DataType m_targetType;
+	// INTERNAL NODE FIELDS
+	// model inter-method variables
 	protected List<String> m_variableColNames;
 	protected List<String> m_dataTableColumnNames;
-	protected List<String> m_approxColNameArr;
 	protected int m_inPort1VariableColumnIndex;
 	protected int m_inPort1CoeffColumnIndex;
 	protected int m_inPort1ExponentIndex = -1;
+	protected DataType m_targetType;
+
+	// view dependent fields
+	protected Set<FunctionTerm> m_termSet;
+	protected CalculatedPoint[] m_calcPoints;
 
 	protected MVLRGraphNodeModel() {
 		// two in-ports, one out-port
 		super(2, 1);
 	}
 
-	// view needs
-	// switch box for columns that exlude the target column and add columns to the
-	// m_approxColNameArr
 	@Override
 	protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
 			throws Exception {
@@ -135,14 +143,18 @@ public class MVLRGraphNodeModel extends NodeModel {
 		// formula factory returns itself and it has
 		// the array of points, the formula itself, and the column to append, if
 		// necessary)
-		
-		//CURRENT STOPPING POINT- need to create the column appender, etc., if append = true
-		//use the Calculated point zValue in the loop to create the values for the new cells
-		//then set a buffered data table = the input and conditionally reassign it to the new
-		//column appender before returning it to finish out the execute method.
-		// may need to create some global storage for some of the information I created 
-		//(such as the calcpointArr so the view can see it and maybe a global formula, holidng
-		//the domains for the x,y,z and the function for the graph mapping
+
+		// CURRENT STOPPING POINT- need to create the column appender, etc., if append =
+		// true
+		// use the Calculated point zValue in the loop to create the values for the new
+		// cells
+		// then set a buffered data table = the input and conditionally reassign it to
+		// the new
+		// column appender before returning it to finish out the execute method.
+		// may need to create some global storage for some of the information I created
+		// (such as the calcpointArr so the view can see it and maybe a global formula,
+		// holidng
+		// the domains for the x,y,z and the function for the graph mapping
 		BufferedDataTable coeffTable = inData[COEFFICIENT_IN_PORT];
 		for (DataRow row : coeffTable) {
 			m_termSet.add(validateCoeffVariables(row));
@@ -155,26 +167,26 @@ public class MVLRGraphNodeModel extends NodeModel {
 		if (m_count.getIntValue() > dataTable.size() || m_appendCalculatedTarget.getBooleanValue()) {
 			m_count.setIntValue((int) dataTable.size());
 		}
-		CalculatedPoint[] calcPoints = new CalculatedPoint[m_count.getIntValue()];
+		m_calcPoints = new CalculatedPoint[m_count.getIntValue()];
 		int iterations = 0;
 		for (DataRow dataRow : dataTable) {
-			calcPoints[iterations] = pointFactory(dataRow, dataTable.getDataTableSpec());
+			m_calcPoints[iterations] = pointFactory(dataRow, dataTable.getDataTableSpec());
 			if (iterations >= m_count.getIntValue()) {
 				break;
 			}
 			iterations++;
 		}
-		
+
 		BufferedDataTable bufferedOutput;
-		if(!m_appendCalculatedTarget.getBooleanValue()) {
+		if (!m_appendCalculatedTarget.getBooleanValue()) {
 			bufferedOutput = exec.createBufferedDataTable(inData[DATA_TABLE_IN_PORT], exec);
-		}else {
-			CellFactory cellFactory = new MVLRGraphCellFactory(createCalcValsOutputColumnSpec(), inData[DATA_TABLE_IN_PORT].getDataTableSpec(), m_termSet);
+		} else {
+			CellFactory cellFactory = new MVLRGraphCellFactory(createCalcValsOutputColumnSpec(),
+					inData[DATA_TABLE_IN_PORT].getDataTableSpec(), m_termSet);
 			ColumnRearranger outputTable = new ColumnRearranger(inData[DATA_TABLE_IN_PORT].getDataTableSpec());
 			outputTable.append(cellFactory);
 			bufferedOutput = exec.createColumnRearrangeTable(inData[DATA_TABLE_IN_PORT], outputTable, exec);
 		}
-
 		return new BufferedDataTable[] { bufferedOutput };
 	}
 
@@ -241,7 +253,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 		for (FunctionTerm fnTerm : m_termSet) {
 			int colIndex = tableSpec.findColumnIndex(fnTerm.getVarName());
 			DataCell currentCell = dataRow.getCell(colIndex);
-			//skip missing cells
+			// skip missing cells
 			if (currentCell.isMissing()) {
 				return new CalculatedPoint();
 			}
@@ -259,12 +271,12 @@ public class MVLRGraphNodeModel extends NodeModel {
 
 	@Override
 	protected void reset() {
-//		if (m_regFn != null) {
-//			m_regFn = null;
-//		}
-//		if (m_dataPoints != null) {
-//			m_dataPoints = null;
-//		}
+		if (m_termSet != null) {
+			m_termSet = null;
+		}
+		if (m_calcPoints != null) {
+			m_calcPoints = null;
+		}
 	}
 
 	@Override
@@ -286,9 +298,9 @@ public class MVLRGraphNodeModel extends NodeModel {
 			if (coeffTableColumns != null && coeffTableColumns.length > 1) {
 				for (String colName : coeffTableColumns) {
 					if (colName.toLowerCase().contains("exponent")) {
-//						m_inPort1ExponentIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(colName);
-						throw new InvalidSettingsException(
-								"The function you are trying to graph appears to be a polynomial regression line. Please use only linear regression for this node.");
+						m_inPort1ExponentIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(colName);
+//						throw new InvalidSettingsException(
+//								"The function you are trying to graph appears to be a polynomial regression line. Please use only linear regression for this node.");
 					}
 					// alternately check for "coeff."
 					if (colName.toLowerCase().trim().contains("coeff") && inSpecs[COEFFICIENT_IN_PORT]
@@ -319,7 +331,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 						"Cannot find coefficient variables from the provided table. Please make sure the coefficient table is connected to the top In-Port (0) and that the column containing the associated column names from the data table (bottom In-Port (1)) is correctly named 'Variable'");
 			}
 			// checking input ind 1
-			boolean hasCompatibleDataTableFormat = false;
 			boolean containsTargetColumn = false;
 			boolean containsXCol = false;
 			boolean containsYCol = false;
@@ -387,30 +398,87 @@ public class MVLRGraphNodeModel extends NodeModel {
 	protected void saveSettingsTo(final NodeSettingsWO settings) {
 		m_count.saveSettingsTo(settings);
 		m_colName.saveSettingsTo(settings);
+		m_xAxisVarColumn.saveSettingsTo(settings);
+		m_yAxisVarColumn.saveSettingsTo(settings);
+		m_appendCalculatedTarget.saveSettingsTo(settings);
+		m_isH2ONode.saveSettingsTo(settings);
 	}
 
 	@Override
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
 		m_count.loadSettingsFrom(settings);
 		m_colName.loadSettingsFrom(settings);
+		m_xAxisVarColumn.loadSettingsFrom(settings);
+		m_yAxisVarColumn.loadSettingsFrom(settings);
+		m_appendCalculatedTarget.loadSettingsFrom(settings);
+		m_isH2ONode.loadSettingsFrom(settings);
 	}
 
 	@Override
 	protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
 		m_count.validateSettings(settings);
 		m_colName.validateSettings(settings);
+		m_xAxisVarColumn.validateSettings(settings);
+		m_yAxisVarColumn.validateSettings(settings);
+		m_appendCalculatedTarget.validateSettings(settings);
+		m_isH2ONode.validateSettings(settings);
 	}
 
 	@Override
 	protected void loadInternals(final File internDir, final ExecutionMonitor exec)
 			throws IOException, CanceledExecutionException {
+		File file = new File(internDir, FILE_NAME);
+		try (FileInputStream fis = new FileInputStream(file)) {
+			ModelContentRO modelContent = ModelContent.loadFromXML(fis);
+			try {
+				int numFnTerms = modelContent.getInt(INTERNAL_MODEL_NUM_FUNCTION_TERM_KEY);
+				int numCalcPoints = modelContent.getInt(INTERNAL_MODEL_NUM_CALC_POINT_KEY);
+				m_termSet = new LinkedHashSet<FunctionTerm>();
+				m_calcPoints = new CalculatedPoint[numCalcPoints];
+				for(int i = 0; i < numFnTerms; i ++) {
+					FunctionTerm newTerm = new FunctionTerm();
+					ModelContentRO subContent = modelContent.getModelContent(INTERNAL_MODEL_TERM_KEY + i);
+					newTerm.loadFrom(subContent);
+					m_termSet.add(newTerm);
+				}
+				
+				for(int i = 0; i < numCalcPoints; i ++) {
+					CalculatedPoint newPoint = new CalculatedPoint();
+					ModelContentRO subContent = modelContent.getModelContent(INTERNAL_MODEL_POINT_KEY + i);
+					newPoint.loadFrom(subContent);
+					m_calcPoints[i] = newPoint;
+				}
+				
+			} catch (InvalidSettingsException e) {
+				throw new IOException("There was a problem loading the internal state of this node.");
+			}
 
+		}
 	}
 
 	@Override
 	protected void saveInternals(final File internDir, final ExecutionMonitor exec)
 			throws IOException, CanceledExecutionException {
-
+		if (m_termSet != null && m_calcPoints != null) {
+			ModelContent modelContent = new ModelContent(INTERNAL_MODEL_NAME_KEY);
+			modelContent.addInt(INTERNAL_MODEL_NUM_FUNCTION_TERM_KEY, m_termSet.size());
+			modelContent.addInt(INTERNAL_MODEL_NUM_CALC_POINT_KEY, m_calcPoints.length);
+			int count = 0;
+			for (FunctionTerm fnTerm : m_termSet) {
+				ModelContentWO subContentWO = modelContent.addModelContent(INTERNAL_MODEL_TERM_KEY + count);
+				fnTerm.saveTo(subContentWO);
+				count++;
+			}
+			count = 0;
+			for (CalculatedPoint calcPoint : m_calcPoints) {
+				ModelContentWO subContentWO = modelContent.addModelContent(INTERNAL_MODEL_POINT_KEY + count);
+				calcPoint.saveTo(subContentWO);
+				count++;
+			}
+			File file = new File(internDir, FILE_NAME);
+			FileOutputStream fos = new FileOutputStream(file);
+			modelContent.saveToXML(fos);
+		}
 	}
 
 }
