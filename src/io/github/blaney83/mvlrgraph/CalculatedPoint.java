@@ -11,6 +11,7 @@ public class CalculatedPoint {
 	private RowKey rowKey;
 	private boolean isSelected;
 	private boolean isHilited;
+	private boolean isMissing = false;
 	
 	public CalculatedPoint() {
 		xValue = 0;
@@ -18,6 +19,7 @@ public class CalculatedPoint {
 		zValue = 0;
 		this.isSelected = false;
 		this.isHilited = false;
+		isMissing = true;
 	}
 	
 	public CalculatedPoint(final double xValue, final double yValue, final double zValue, final RowKey rowKey) {
@@ -43,6 +45,10 @@ public class CalculatedPoint {
 
 	public RowKey getRowKey() {
 		return rowKey;
+	}
+	
+	public boolean getIsMissing() {
+		return this.isMissing;
 	}
 
 	public boolean isSelected() {
