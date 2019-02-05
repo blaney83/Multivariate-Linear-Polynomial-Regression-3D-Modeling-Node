@@ -21,6 +21,8 @@ import org.knime.core.data.DomainCreatorColumnSelection;
 import org.knime.core.data.DoubleValue;
 import org.knime.core.data.RowKey;
 import org.knime.core.data.StringValue;
+import org.knime.core.data.container.CellFactory;
+import org.knime.core.data.container.ColumnRearranger;
 import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.IntCell;
@@ -157,22 +159,23 @@ public class MVLRGraphNodeModel extends NodeModel {
 		int iterations = 0;
 		for (DataRow dataRow : dataTable) {
 			calcPoints[iterations] = pointFactory(dataRow, dataTable.getDataTableSpec());
-			if (m_appendCalculatedTarget.getBooleanValue()) {
-				calcPoints[iterations].getZValue();
-			}
 			if (iterations >= m_count.getIntValue()) {
 				break;
 			}
 			iterations++;
 		}
+		
+		BufferedDataTable bufferedOutput;
+		if(!m_appendCalculatedTarget.getBooleanValue()) {
+			bufferedOutput = exec.createBufferedDataTable(inData[DATA_TABLE_IN_PORT], exec);
+		}else {
+			CellFactory cellFactory = new MVLRGraphCellFactory(createCalcValsOutputColumnSpec(), inData[DATA_TABLE_IN_PORT].getDataTableSpec(), m_termSet);
+			ColumnRearranger outputTable = new ColumnRearranger(inData[DATA_TABLE_IN_PORT].getDataTableSpec());
+			outputTable.append(cellFactory);
+			bufferedOutput = exec.createColumnRearrangeTable(inData[DATA_TABLE_IN_PORT], outputTable, exec);
+		}
 
-//		Set<FunctionTerm> fnVarSet = new LinkedHashSet<FunctionTerm>();
-//		fnVarSet.addAll(m_termSet);
-
-		// TODO do something here
-//        logger.info("Node Model Stub... this is not yet implemented !");
-//
-		return new BufferedDataTable[] { out };
+		return new BufferedDataTable[] { bufferedOutput };
 	}
 
 	private FunctionTerm validateCoeffVariables(final DataRow dataRow) throws InterruptedExecutionException {
@@ -240,7 +243,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 			DataCell currentCell = dataRow.getCell(colIndex);
 			//skip missing cells
 			if (currentCell.isMissing()) {
-				continue;
+				return new CalculatedPoint();
 			}
 			double cellValue = ((DoubleValue) dataRow.getCell(colIndex)).getDoubleValue();
 			if (fnTerm.getVarName().contentEquals(m_xAxisVarColumn.getStringValue())) {
