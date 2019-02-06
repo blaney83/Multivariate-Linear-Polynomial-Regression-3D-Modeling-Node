@@ -33,7 +33,7 @@ public class MVLRGraphCellFactory extends SingleCellFactory{
 			}
 			double cellValue = ((DoubleValue) row.getCell(colIndex)).getDoubleValue();
 
-			outPutValue += cellValue;
+			outPutValue += fnTerm.evaluateTerm(cellValue);
 		}
 		return new DoubleCell(outPutValue);
 	}

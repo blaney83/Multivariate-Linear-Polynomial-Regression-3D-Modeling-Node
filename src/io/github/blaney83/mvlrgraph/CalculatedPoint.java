@@ -7,8 +7,6 @@ import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
 
-import com.sun.rowset.internal.Row;
-
 public class CalculatedPoint {
 
 	private final static String CFGKEY_X_VAL = "xVal";

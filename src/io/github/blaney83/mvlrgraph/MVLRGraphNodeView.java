@@ -1,6 +1,13 @@
 package io.github.blaney83.mvlrgraph;
 
+import java.util.Set;
+
+import javax.swing.JMenuItem;
+
 import org.knime.core.node.NodeView;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.property.hilite.HiLiteHandler;
+import org.knime.core.node.property.hilite.HiLiteListener;
 
 /**
  * <code>NodeView</code> for the "MVLRGraph" Node.
@@ -8,13 +15,23 @@ import org.knime.core.node.NodeView;
  *
  * @author Benjamin Laney
  */
-public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> {
+public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> implements HiLiteListener {
+	
+	//Selected Points
+	private final Set<CalculatedPoint> m_selected;
+	
+	//Dialog View Variables
+	//dynamic point coloring
+	//custom plane color
+	
+	// JMenu items
+	private final JMenuItem m_hilite;
+	private final JMenuItem m_unhilite;
+	//rotate
+	
+	// Local HiLiteHandler
+	private HiLiteHandler m_hiliteHandler = null;
 
-    /**
-     * Creates a new view.
-     * 
-     * @param nodeModel The model (class: {@link MVLRGraphNodeModel})
-     */
     protected MVLRGraphNodeView(final MVLRGraphNodeModel nodeModel) {
         super(nodeModel);
 

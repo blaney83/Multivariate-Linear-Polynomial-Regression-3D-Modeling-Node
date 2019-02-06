@@ -10,38 +10,30 @@ import java.util.List;
 import java.util.Set;
 
 import org.knime.base.node.io.filereader.InterruptedExecutionException;
-import org.knime.base.node.preproc.joiner.ColumnSpecListRenderer;
 import org.knime.core.data.DataCell;
-import org.knime.core.data.DataColumnDomain;
 import org.knime.core.data.DataColumnDomainCreator;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.DomainCreatorColumnSelection;
 import org.knime.core.data.DoubleValue;
-import org.knime.core.data.RowKey;
 import org.knime.core.data.StringValue;
 import org.knime.core.data.container.CellFactory;
 import org.knime.core.data.container.ColumnRearranger;
-import org.knime.core.data.def.DefaultRow;
 import org.knime.core.data.def.DoubleCell;
-import org.knime.core.data.def.IntCell;
-import org.knime.core.data.def.StringCell;
-import org.knime.core.node.BufferedDataContainer;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelColumnName;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
-import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContent;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
-import org.knime.core.node.NodeLogger;
+//import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -64,7 +56,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 	private static final String FILE_NAME = "mvlrGraphInternals.xml";
 
 	// the logger instance
-	private static final NodeLogger logger = NodeLogger.getLogger(MVLRGraphNodeModel.class);
+//	private static final NodeLogger logger = NodeLogger.getLogger(MVLRGraphNodeModel.class);
 
 	// internal config keys
 	static final String CFGKEY_COUNT = "count";
@@ -93,16 +85,16 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// opacity of planar field
 
 	// default settings fields
-	private static final int DEFAULT_COUNT = 100;
-	private static final boolean DEFAULT_APPEND_CALCULATED_TARGET = false;
-	private static final boolean DEFAULT_IS_H2O_NODE = false;
+	static final int DEFAULT_COUNT = 100;
+	static final boolean DEFAULT_APPEND_CALCULATED_TARGET = false;
+	static final boolean DEFAULT_IS_H2O_NODE = false;
 
 	// settings model
 	private final SettingsModelIntegerBounded m_count = new SettingsModelIntegerBounded(MVLRGraphNodeModel.CFGKEY_COUNT,
 			MVLRGraphNodeModel.DEFAULT_COUNT, 0, Integer.MAX_VALUE);
-	private final SettingsModelString m_colName = new SettingsModelString(CFGKEY_COL_NAME, "");
-	private final SettingsModelString m_xAxisVarColumn = new SettingsModelString(CFGKEY_X_AXIS_VAR_COLUMN, "");
-	private final SettingsModelString m_yAxisVarColumn = new SettingsModelString(CFGKEY_Y_AXIS_VAR_COLUMN, "");
+	private final SettingsModelColumnName m_colName = new SettingsModelColumnName(CFGKEY_COL_NAME, "");
+	private final SettingsModelColumnName m_xAxisVarColumn = new SettingsModelColumnName(CFGKEY_X_AXIS_VAR_COLUMN, "");
+	private final SettingsModelColumnName m_yAxisVarColumn = new SettingsModelColumnName(CFGKEY_Y_AXIS_VAR_COLUMN, "");
 	private final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
 			CFGKEY_APPEND_CALCULATED_TARGET, DEFAULT_APPEND_CALCULATED_TARGET);
 	private final SettingsModelBoolean m_isH2ONode = new SettingsModelBoolean(CFGKEY_IS_H2O_NODE, DEFAULT_IS_H2O_NODE);
@@ -264,7 +256,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 			if (fnTerm.getVarName().contentEquals(m_yAxisVarColumn.getStringValue())) {
 				yValue = cellValue;
 			}
-			outPutValue += cellValue;
+			outPutValue += fnTerm.evaluateTerm(cellValue);
 		}
 		return new CalculatedPoint(xValue, yValue, outPutValue, dataRow.getKey());
 	}
