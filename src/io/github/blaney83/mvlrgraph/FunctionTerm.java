@@ -38,7 +38,7 @@ public class FunctionTerm {
 		isConstant = false;
 		if (this.varName.toLowerCase().trim().equals("intercept")) {
 			isConstant = true;
-			double value = Math.pow(coefficient, exponent);
+			this.value = Math.pow(coefficient, exponent);
 		}
 	}
 
@@ -49,7 +49,7 @@ public class FunctionTerm {
 		isConstant = false;
 		if (this.varName.toLowerCase().trim().equals("intercept")) {
 			isConstant = true;
-			double value = Math.pow(coefficient, exponent);
+			this.value = Math.pow(coefficient, exponent);
 		}
 	}
 
@@ -123,8 +123,15 @@ public class FunctionTerm {
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		return this.getExponent() + (int) this.getCoefficient() + this.getVarName().hashCode();
+		int boolSwitch = 0;
+		if(this.isConstant) {
+			boolSwitch = 1;
+		}
+		return  this.getVarName().hashCode() + 
+				(int) this.getCoefficient() +
+				this.getExponent() +  
+				boolSwitch + 
+				this.domain.hashCode();
 	}
 
 	@Override
@@ -136,16 +143,21 @@ public class FunctionTerm {
 			return false;
 		}
 		FunctionTerm otherTerm = (FunctionTerm) obj;
-		if (this.isConstant != otherTerm.getIsConstant()) {
-			return false;
-		}
 		if (!this.getVarName().equals(otherTerm.getVarName())) {
 			return false;
 		}
 		if (Double.compare(this.getCoefficient(), otherTerm.getCoefficient()) != 0) {
 			return false;
 		}
+
 		if (this.getExponent() != otherTerm.getExponent()) {
+			return false;
+		}
+		if (this.isConstant != otherTerm.getIsConstant()) {
+			return false;
+		}
+		if(!this.domain.getLowerBound().equals(otherTerm.getLowerBound()) ||
+				this.domain.getUpperBound().equals(otherTerm.getUpperBound())) {
 			return false;
 		}
 		return true;
