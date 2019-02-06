@@ -27,6 +27,9 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelColumnName;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
+
+import sun.security.action.GetBooleanAction;
+
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
@@ -92,10 +95,10 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// settings model
 	private final SettingsModelIntegerBounded m_count = new SettingsModelIntegerBounded(MVLRGraphNodeModel.CFGKEY_COUNT,
 			MVLRGraphNodeModel.DEFAULT_COUNT, 0, Integer.MAX_VALUE);
-	private final SettingsModelColumnName m_colName = new SettingsModelColumnName(CFGKEY_COL_NAME, "");
-	private final SettingsModelColumnName m_xAxisVarColumn = new SettingsModelColumnName(CFGKEY_X_AXIS_VAR_COLUMN, "");
-	private final SettingsModelColumnName m_yAxisVarColumn = new SettingsModelColumnName(CFGKEY_Y_AXIS_VAR_COLUMN, "");
-	private final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
+	protected final SettingsModelColumnName m_colName = new SettingsModelColumnName(CFGKEY_COL_NAME, "");
+	protected final SettingsModelColumnName m_xAxisVarColumn = new SettingsModelColumnName(CFGKEY_X_AXIS_VAR_COLUMN, "");
+	protected final SettingsModelColumnName m_yAxisVarColumn = new SettingsModelColumnName(CFGKEY_Y_AXIS_VAR_COLUMN, "");
+	protected final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
 			CFGKEY_APPEND_CALCULATED_TARGET, DEFAULT_APPEND_CALCULATED_TARGET);
 	private final SettingsModelBoolean m_isH2ONode = new SettingsModelBoolean(CFGKEY_IS_H2O_NODE, DEFAULT_IS_H2O_NODE);
 
@@ -472,5 +475,4 @@ public class MVLRGraphNodeModel extends NodeModel {
 			modelContent.saveToXML(fos);
 		}
 	}
-
 }
