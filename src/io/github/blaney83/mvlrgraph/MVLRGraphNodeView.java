@@ -6,6 +6,7 @@ import javax.swing.JMenuItem;
 
 import org.knime.core.node.NodeView;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.core.node.property.hilite.HiLiteHandler;
 import org.knime.core.node.property.hilite.HiLiteListener;
 
@@ -17,12 +18,24 @@ import org.knime.core.node.property.hilite.HiLiteListener;
  */
 public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> implements HiLiteListener {
 	
-	//Selected Points
-	private final Set<CalculatedPoint> m_selected;
+	//view config variables
+	public static final String CFGKEY_GRAPH_TITLE = "graphTitle";
+	public static final String CFGKEY_GRAPH_EQUATION = "graphEquation";
+	
+	//view defaults
+	static final String DEFAULT_GRAPH_TITLE = "Learned Regression Model vs. Real Data";
+	static final boolean DEFAULT_GRAPH_EQUATION = true;
+	
+	//settings models
+	final SettingsModelString m_graphTitle = new SettingsModelString(CFGKEY_GRAPH_EQUATION, DEFAULT_GRAPH_TITLE);
+	final SettingsModelBoolean m_graphEquation = new SettingsModelBoolean(CFGKEY_GRAPH_EQUATION, DEFAULT_GRAPH_EQUATION);
 	
 	//Dialog View Variables
 	//dynamic point coloring
 	//custom plane color
+	
+	//Selected Points
+	private final Set<CalculatedPoint> m_selected;
 	
 	// JMenu items
 	private final JMenuItem m_hilite;
