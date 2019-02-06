@@ -12,6 +12,9 @@ import java.util.Set;
 import javax.swing.JPanel;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane.TitlePaneLayout;
 
+import org.jzy3d.bridge.swing.FrameSwing;
+import org.jzy3d.maths.Rectangle;
+
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 public class MVLRGraphNodeViewPanel extends JPanel {
@@ -22,6 +25,10 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	private static final int HEIGHT = 650;
 	// graph instance
 	private MVLRGraphPanel graphPanel;
+	//panel internal fields
+	private String m_targetName;
+	private String m_xName;
+	private String m_yName;
 
 	// external view data
 	private Set<FunctionTerm> m_termSet;
@@ -30,6 +37,9 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	public MVLRGraphNodeViewPanel(final MVLRGraphNodeModel nodeModel) {
 		this.m_termSet = nodeModel.m_termSet;
 		this.m_calcPoints = nodeModel.m_calcPoints;
+		this.m_targetName = nodeModel.m_colName.getStringValue();
+		this.m_xName = nodeModel.m_xAxisVarColumn.getStringValue();
+		this.m_yName = nodeModel.m_yAxisVarColumn.getStringValue();
 
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		setLayout(new BorderLayout());
@@ -37,22 +47,31 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 		TitlePanel titlePanel = new TitlePanel(MVLRGraphNodeView.DEFAULT_GRAPH_TITLE);
 		add(titlePanel, BorderLayout.NORTH);
 		if (MVLRGraphNodeView.DEFAULT_GRAPH_EQUATION) {
-			EquationPanel eqPanel = new EquationPanel(nodeModel.m_termSet, nodeModel.m_colName.getStringValue(),
-					nodeModel.m_xAxisVarColumn.getStringValue(), nodeModel.m_yAxisVarColumn.getStringValue());
+			EquationPanel eqPanel = new EquationPanel(nodeModel.m_termSet, m_targetName,
+					m_xName, m_yName);
 			add(eqPanel, BorderLayout.SOUTH);
 		}
-		graphPanel = new MVLRGraphPanel(termSet, calcPoints);
-		add(graphPanel);
+		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName);
+
+		Rectangle rect = new Rectangle(500, 500);
+		FrameSwing jFrame = new FrameSwing(graphPanel.initializeChart(), rect, "TESTING");
+		add(jFrame);
+
 	}
 
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-		graphPanel.repaint();
+//		graphPanel.u();
 	}
 
-	public void updateView(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints) {
-		graphPanel.updateView(termSet, calcPoints);
+	public void updateView(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName, final String xName, final String yName) {
+		this.m_termSet = termSet;
+		this.m_calcPoints = calcPoints;
+		this.m_targetName = targetName;
+		this.m_xName = xName;
+		this.m_yName = yName;
+		graphPanel.updateView(termSet, calcPoints, targetName, xName, yName);
 	}
 
 	private final class TitlePanel extends JPanel {

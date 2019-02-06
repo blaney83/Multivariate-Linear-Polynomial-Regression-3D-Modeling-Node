@@ -3,7 +3,20 @@ Bundle-ManifestVersion: 2
 Bundle-Name: MVLRGraph-Node extension for KNIME Workbench
 Bundle-SymbolicName: io.github.blaney83.mvlrgraph; singleton:=true
 Bundle-Version: 1.0.0
-Bundle-ClassPath: mvlrgraph.jar
+Bundle-ClassPath: mvlrgraph.jar,
+ lib/gluegen-rt-main-2.3.2.jar,
+ lib/jmatio-1.0.jar,
+ lib/jogl-all-main-2.3.2.jar,
+ lib/jply-0.2.1.jar,
+ lib/junit-4.11.jar,
+ lib/jzy3d-api-1.0.2-maths-io.jar,
+ lib/jzy3d-api-1.0.2-sources.jar,
+ lib/jzy3d-jdt-core-1.0.2.jar,
+ lib/jzy3d-swt-1.0.2.jar,
+ lib/log4j-1.2.16.jar,
+ lib/miglayout-3.7.4.jar,
+ lib/opencsv-2.1.jar,
+ lib/jzy3d-api-1.0.2.jar
 Bundle-Activator: io.github.blaney83.mvlrgraph.MVLRGraphNodePlugin
 Bundle-Vendor: Benjamin Laney
 Require-Bundle: org.eclipse.core.runtime,

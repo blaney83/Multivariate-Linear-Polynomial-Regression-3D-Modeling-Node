@@ -16,7 +16,9 @@ import org.knime.core.node.property.hilite.HiLiteListener;
  *
  * @author Benjamin Laney
  */
-public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> implements HiLiteListener {
+public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> 
+//implements HiLiteListener 
+{
 	
 	//view config variables
 	public static final String CFGKEY_GRAPH_TITLE = "graphTitle";
@@ -35,11 +37,11 @@ public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> implements H
 	//custom plane color
 	
 	//Selected Points
-	private final Set<CalculatedPoint> m_selected;
+//	private final Set<CalculatedPoint> m_selected;
 	
 	// JMenu items
-	private final JMenuItem m_hilite;
-	private final JMenuItem m_unhilite;
+//	private final JMenuItem m_hilite;
+//	private final JMenuItem m_unhilite;
 	//rotate
 	
 	// Local HiLiteHandler
@@ -47,7 +49,8 @@ public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel> implements H
 
     protected MVLRGraphNodeView(final MVLRGraphNodeModel nodeModel) {
         super(nodeModel);
-
+        MVLRGraphNodeViewPanel m_borderLayout = new MVLRGraphNodeViewPanel(nodeModel);
+        setComponent(m_borderLayout);
         // TODO instantiate the components of the view here.
 
     }
