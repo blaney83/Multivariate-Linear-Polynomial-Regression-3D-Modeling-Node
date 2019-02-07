@@ -178,14 +178,15 @@ public class MVLRGraphNodeModel extends NodeModel {
 		}
 
 		BufferedDataTable bufferedOutput;
+		//calculate values anyways, so as to color points on graph accordingly
+		CellFactory cellFactory = new MVLRGraphCellFactory(createCalcValsOutputColumnSpec(),
+				inData[DATA_TABLE_IN_PORT].getDataTableSpec(), m_termSet, m_calcPoints);
+		ColumnRearranger outputTable = new ColumnRearranger(inData[DATA_TABLE_IN_PORT].getDataTableSpec());
+		outputTable.append(cellFactory);
+		bufferedOutput = exec.createColumnRearrangeTable(inData[DATA_TABLE_IN_PORT], outputTable, exec);
+		
 		if (!m_appendCalculatedTarget.getBooleanValue()) {
 			bufferedOutput = exec.createBufferedDataTable(inData[DATA_TABLE_IN_PORT], exec);
-		} else {
-			CellFactory cellFactory = new MVLRGraphCellFactory(createCalcValsOutputColumnSpec(),
-					inData[DATA_TABLE_IN_PORT].getDataTableSpec(), m_termSet);
-			ColumnRearranger outputTable = new ColumnRearranger(inData[DATA_TABLE_IN_PORT].getDataTableSpec());
-			outputTable.append(cellFactory);
-			bufferedOutput = exec.createColumnRearrangeTable(inData[DATA_TABLE_IN_PORT], outputTable, exec);
 		}
 		return new BufferedDataTable[] { bufferedOutput };
 	}
@@ -195,7 +196,10 @@ public class MVLRGraphNodeModel extends NodeModel {
 			double coeff = Double.parseDouble(dataRow.getCell(m_inPort1CoeffColumnIndex).toString());
 			int exponent = 1;
 			if (m_inPort1ExponentIndex != -1) {
+				System.out.println("Firing");
+				System.out.println(m_inPort1ExponentIndex);
 				exponent = Integer.parseInt(dataRow.getCell(m_inPort1ExponentIndex).toString());
+				System.out.println(exponent);
 			}
 			if (!m_isH2ONode.getBooleanValue()) {
 				String varName = dataRow.getCell(m_inPort1VariableColumnIndex).toString();
@@ -234,48 +238,58 @@ public class MVLRGraphNodeModel extends NodeModel {
 				meanSum += value;
 				lowerBound = Math.min(lowerBound, value);
 				upperBound = Math.max(upperBound, value);
-
+				
 				totalRows++;
 			}
 			DataColumnDomainCreator colDomainCreator = new DataColumnDomainCreator();
 			colDomainCreator.setLowerBound(new DoubleCell(lowerBound));
 			colDomainCreator.setUpperBound(new DoubleCell(upperBound));
 			fnTerm.setDomain(colDomainCreator.createDomain());
-			if (colName != m_colName.getStringValue() && colName != m_xAxisVarColumn.getStringValue()
-					&& colName != m_yAxisVarColumn.getStringValue()) {
+			if (!colName.equals(m_colName.getStringValue()) && !colName.equals(m_xAxisVarColumn.getStringValue())
+					&& !colName.equals(m_yAxisVarColumn.getStringValue())) {
 				fnTerm.setValue(meanSum / totalRows);
 			}
 		} else {
 			// handle intercept
 			fnTerm.setValue(1);
+			DataColumnDomainCreator colDomainCreator = new DataColumnDomainCreator();
+			colDomainCreator.setLowerBound(new DoubleCell(fnTerm.getCoefficient()));
+			colDomainCreator.setUpperBound(new DoubleCell(fnTerm.getCoefficient()));
+			fnTerm.setDomain(colDomainCreator.createDomain());
 		}
 	}
 
 	private CalculatedPoint pointFactory(final DataRow dataRow, final DataTableSpec tableSpec) {
-		double xValue = 0;
-		double yValue = 0;
-		double outPutValue = 0;
-		for (FunctionTerm fnTerm : m_termSet) {
-			int colIndex = tableSpec.findColumnIndex(fnTerm.getVarName());
-			if (colIndex > -1) {
-				DataCell currentCell = dataRow.getCell(colIndex);
-				// skip missing cells
-				if (currentCell.isMissing()) {
-					return new CalculatedPoint();
-				}
-				double cellValue = ((DoubleValue) dataRow.getCell(colIndex)).getDoubleValue();
-				if (fnTerm.getVarName().contentEquals(m_xAxisVarColumn.getStringValue())) {
-					xValue = cellValue;
-				}
-				if (fnTerm.getVarName().contentEquals(m_yAxisVarColumn.getStringValue())) {
-					yValue = cellValue;
-				}
-				outPutValue += fnTerm.evaluateTerm(cellValue);
-			} else {
-				// intercept
-				outPutValue += fnTerm.evaluateTerm(0);
-			}
-		}
+		int targetIndex = tableSpec.findColumnIndex(m_colName.getStringValue());
+		int xIndex = tableSpec.findColumnIndex(m_xAxisVarColumn.getStringValue());
+		int yIndex = tableSpec.findColumnIndex(m_yAxisVarColumn.getStringValue());
+		double xValue = ((DoubleValue) dataRow.getCell(xIndex)).getDoubleValue();
+		double yValue = ((DoubleValue) dataRow.getCell(yIndex)).getDoubleValue();
+		double outPutValue = ((DoubleValue) dataRow.getCell(targetIndex)).getDoubleValue();
+//		for (FunctionTerm fnTerm : m_termSet) {
+//			int colIndex = tableSpec.findColumnIndex(fnTerm.getVarName());
+//			if (colIndex > -1) {
+//				DataCell currentCell = dataRow.getCell(colIndex);
+//				// skip missing cells
+//				if (currentCell.isMissing()) {
+//					return new CalculatedPoint();
+//				}
+//				double cellValue = ((DoubleValue) dataRow.getCell(colIndex)).getDoubleValue();
+//				if (fnTerm.getVarName().contentEquals(m_xAxisVarColumn.getStringValue())) {
+//					xValue = cellValue;
+//				}
+//				if (fnTerm.getVarName().contentEquals(m_yAxisVarColumn.getStringValue())) {
+//					yValue = cellValue;
+//				}
+////				if (fnTerm.getVarName().contentEquals(m_colName.getStringValue())) {
+////					outPutValue = cellValue;
+////				}
+////				outPutValue += fnTerm.evaluateTerm(cellValue);
+//			} else {
+//				// intercept
+////				outPutValue += fnTerm.evaluateTerm(0);
+//			}
+//		}
 		return new CalculatedPoint(xValue, yValue, outPutValue, dataRow.getKey());
 	}
 

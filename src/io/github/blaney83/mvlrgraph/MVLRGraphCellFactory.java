@@ -15,12 +15,14 @@ import org.knime.core.data.def.DoubleCell;
 public class MVLRGraphCellFactory extends SingleCellFactory {
 	private final DataTableSpec tableSpec;
 	private final Set<FunctionTerm> functionTerms;
+	private final CalculatedPoint[] calcPoints;
 
 	public MVLRGraphCellFactory(final DataColumnSpec newColSpec, final DataTableSpec tableSpec,
-			final Set<FunctionTerm> functionTerms) {
+			final Set<FunctionTerm> functionTerms, final CalculatedPoint[] calcPoints) {
 		super(newColSpec);
 		this.tableSpec = tableSpec;
 		this.functionTerms = new LinkedHashSet<FunctionTerm>(functionTerms);
+		this.calcPoints = calcPoints;
 	}
 
 	@Override
@@ -39,6 +41,11 @@ public class MVLRGraphCellFactory extends SingleCellFactory {
 			}else {
 				//handle intercept
 				outPutValue += fnTerm.evaluateTerm(0);
+			}
+		}
+		for(CalculatedPoint point : calcPoints) {
+			if(point.getRowKey().equals(row.getKey())) {
+				point.setPercentError((point.getZValue() - outPutValue)/ outPutValue);
 			}
 		}
 		return new DoubleCell(outPutValue);

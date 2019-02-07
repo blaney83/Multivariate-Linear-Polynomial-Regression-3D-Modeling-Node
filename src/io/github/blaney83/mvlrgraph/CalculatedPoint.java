@@ -18,6 +18,7 @@ public class CalculatedPoint {
 	private double xValue;
 	private double yValue;
 	private double zValue;
+	private double percentError;
 	private RowKey rowKey;
 	private boolean isSelected;
 	private boolean isHilited;
@@ -55,6 +56,14 @@ public class CalculatedPoint {
 
 	public RowKey getRowKey() {
 		return rowKey;
+	}
+	
+	public void setPercentError(final double err) {
+		percentError = err;
+	}
+	
+	public double getPercentError() {
+		return percentError;
 	}
 
 	public void saveTo(final ModelContentWO modelContent) {
