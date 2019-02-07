@@ -1,6 +1,7 @@
 package io.github.blaney83.mvlrgraph;
 
 import java.awt.BorderLayout;
+
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -10,12 +11,12 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.swing.JPanel;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.TitlePaneLayout;
 
+import org.jzy3d.analysis.AnalysisLauncher;
+import org.jzy3d.bridge.awt.FrameAWT;
 import org.jzy3d.bridge.swing.FrameSwing;
 import org.jzy3d.maths.Rectangle;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.Collections;
 
 public class MVLRGraphNodeViewPanel extends JPanel {
 	// v1
@@ -34,7 +35,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	private Set<FunctionTerm> m_termSet;
 	private CalculatedPoint[] m_calcPoints;
 
-	public MVLRGraphNodeViewPanel(final MVLRGraphNodeModel nodeModel) {
+	public MVLRGraphNodeViewPanel(final MVLRGraphNodeModel nodeModel){
 		this.m_termSet = nodeModel.m_termSet;
 		this.m_calcPoints = nodeModel.m_calcPoints;
 		this.m_targetName = nodeModel.m_colName.getStringValue();
@@ -52,10 +53,15 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 			add(eqPanel, BorderLayout.SOUTH);
 		}
 		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName);
-
+		try {
+			AnalysisLauncher.open(graphPanel);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		Rectangle rect = new Rectangle(500, 500);
-		FrameSwing jFrame = new FrameSwing(graphPanel.initializeChart(), rect, "TESTING");
-		add(jFrame);
+		FrameAWT jFrame = new FrameAWT(graphPanel.initializeChart(), rect, "TESTING");
+		add(jFrame, BorderLayout.CENTER);
 
 	}
 
@@ -206,9 +212,11 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 					sign = " \208B";
 				}
 				StringBuilder subscriptBuilder = new StringBuilder(sign);
-				String[] valueSplit = ("%.2f" + Math.abs(val)).split("");
+//				String[] valueSplit = ("%.2f" + Math.abs(val)).split("");
+				//regex is not triming double value
+				String[] valueSplit = ("" + Math.abs(val)).split("");
 				for (String str : valueSplit) {
-					if (str == ".") {
+					if (str.equals(".")) {
 						subscriptBuilder.append(str);
 						continue;
 					}

@@ -73,7 +73,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// save/load cfg keys
 	static final String INTERNAL_MODEL_NAME_KEY = "internalModel";
 	static final String INTERNAL_MODEL_NUM_FUNCTION_TERM_KEY = "numFnTerms";
-	static final String INTERNAL_MODEL_NUM_CALC_POINT_KEY= "numCalcPoints";
+	static final String INTERNAL_MODEL_NUM_CALC_POINT_KEY = "numCalcPoints";
 	static final String INTERNAL_MODEL_TERM_KEY = "fnTerm";
 	static final String INTERNAL_MODEL_POINT_KEY = "calcPoint";
 	// if R^k=>R where k>2, then let them pick which columns to assign as mean
@@ -96,8 +96,10 @@ public class MVLRGraphNodeModel extends NodeModel {
 	private final SettingsModelIntegerBounded m_count = new SettingsModelIntegerBounded(MVLRGraphNodeModel.CFGKEY_COUNT,
 			MVLRGraphNodeModel.DEFAULT_COUNT, 0, Integer.MAX_VALUE);
 	protected final SettingsModelColumnName m_colName = new SettingsModelColumnName(CFGKEY_COL_NAME, "");
-	protected final SettingsModelColumnName m_xAxisVarColumn = new SettingsModelColumnName(CFGKEY_X_AXIS_VAR_COLUMN, "");
-	protected final SettingsModelColumnName m_yAxisVarColumn = new SettingsModelColumnName(CFGKEY_Y_AXIS_VAR_COLUMN, "");
+	protected final SettingsModelColumnName m_xAxisVarColumn = new SettingsModelColumnName(CFGKEY_X_AXIS_VAR_COLUMN,
+			"");
+	protected final SettingsModelColumnName m_yAxisVarColumn = new SettingsModelColumnName(CFGKEY_Y_AXIS_VAR_COLUMN,
+			"");
 	protected final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
 			CFGKEY_APPEND_CALCULATED_TARGET, DEFAULT_APPEND_CALCULATED_TARGET);
 	private final SettingsModelBoolean m_isH2ONode = new SettingsModelBoolean(CFGKEY_IS_H2O_NODE, DEFAULT_IS_H2O_NODE);
@@ -150,6 +152,9 @@ public class MVLRGraphNodeModel extends NodeModel {
 		// (such as the calcpointArr so the view can see it and maybe a global formula,
 		// holidng
 		// the domains for the x,y,z and the function for the graph mapping
+		m_variableColNames = new ArrayList<String>();
+		m_termSet = new LinkedHashSet<FunctionTerm>();
+
 		BufferedDataTable coeffTable = inData[COEFFICIENT_IN_PORT];
 		for (DataRow row : coeffTable) {
 			m_termSet.add(validateCoeffVariables(row));
@@ -194,7 +199,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 			}
 			if (!m_isH2ONode.getBooleanValue()) {
 				String varName = dataRow.getCell(m_inPort1VariableColumnIndex).toString();
-				if (m_dataTableColumnNames.contains(varName) || varName.toLowerCase().trim() == "intercept") {
+				System.out.println(varName);
+				if (m_dataTableColumnNames.contains(varName) || varName.toLowerCase().trim().equals("intercept")) {
 					m_variableColNames.add(varName);
 					return new FunctionTerm(varName, coeff, exponent);
 				}
@@ -217,27 +223,31 @@ public class MVLRGraphNodeModel extends NodeModel {
 	private void processColumn(final BufferedDataTable input, final FunctionTerm fnTerm) {
 		String colName = fnTerm.getVarName();
 		int colIndex = input.getDataTableSpec().findColumnIndex(colName);
+		if (colIndex > -1) {
+			double meanSum = 0;
+			double lowerBound = Double.MAX_VALUE;
+			double upperBound = Double.MIN_VALUE;
+			int totalRows = 0;
+			for (DataRow row : input) {
+				DataCell cell = row.getCell(colIndex);
+				double value = ((DoubleValue) cell).getDoubleValue();
+				meanSum += value;
+				lowerBound = Math.min(lowerBound, value);
+				upperBound = Math.max(upperBound, value);
 
-		double meanSum = 0;
-		double lowerBound = Double.MAX_VALUE;
-		double upperBound = Double.MIN_VALUE;
-		int totalRows = 0;
-		for (DataRow row : input) {
-			DataCell cell = row.getCell(colIndex);
-			double value = ((DoubleValue) cell).getDoubleValue();
-			meanSum += value;
-			lowerBound = Math.min(lowerBound, value);
-			upperBound = Math.max(upperBound, value);
-
-			totalRows++;
-		}
-		DataColumnDomainCreator colDomainCreator = new DataColumnDomainCreator();
-		colDomainCreator.setLowerBound(new DoubleCell(lowerBound));
-		colDomainCreator.setUpperBound(new DoubleCell(upperBound));
-		fnTerm.setDomain(colDomainCreator.createDomain());
-		if (colName != m_colName.getStringValue() && colName != m_xAxisVarColumn.getStringValue()
-				&& colName != m_yAxisVarColumn.getStringValue()) {
-			fnTerm.setValue(meanSum / totalRows);
+				totalRows++;
+			}
+			DataColumnDomainCreator colDomainCreator = new DataColumnDomainCreator();
+			colDomainCreator.setLowerBound(new DoubleCell(lowerBound));
+			colDomainCreator.setUpperBound(new DoubleCell(upperBound));
+			fnTerm.setDomain(colDomainCreator.createDomain());
+			if (colName != m_colName.getStringValue() && colName != m_xAxisVarColumn.getStringValue()
+					&& colName != m_yAxisVarColumn.getStringValue()) {
+				fnTerm.setValue(meanSum / totalRows);
+			}
+		} else {
+			// handle intercept
+			fnTerm.setValue(1);
 		}
 	}
 
@@ -247,19 +257,24 @@ public class MVLRGraphNodeModel extends NodeModel {
 		double outPutValue = 0;
 		for (FunctionTerm fnTerm : m_termSet) {
 			int colIndex = tableSpec.findColumnIndex(fnTerm.getVarName());
-			DataCell currentCell = dataRow.getCell(colIndex);
-			// skip missing cells
-			if (currentCell.isMissing()) {
-				return new CalculatedPoint();
+			if (colIndex > -1) {
+				DataCell currentCell = dataRow.getCell(colIndex);
+				// skip missing cells
+				if (currentCell.isMissing()) {
+					return new CalculatedPoint();
+				}
+				double cellValue = ((DoubleValue) dataRow.getCell(colIndex)).getDoubleValue();
+				if (fnTerm.getVarName().contentEquals(m_xAxisVarColumn.getStringValue())) {
+					xValue = cellValue;
+				}
+				if (fnTerm.getVarName().contentEquals(m_yAxisVarColumn.getStringValue())) {
+					yValue = cellValue;
+				}
+				outPutValue += fnTerm.evaluateTerm(cellValue);
+			} else {
+				// intercept
+				outPutValue += fnTerm.evaluateTerm(0);
 			}
-			double cellValue = ((DoubleValue) dataRow.getCell(colIndex)).getDoubleValue();
-			if (fnTerm.getVarName().contentEquals(m_xAxisVarColumn.getStringValue())) {
-				xValue = cellValue;
-			}
-			if (fnTerm.getVarName().contentEquals(m_yAxisVarColumn.getStringValue())) {
-				yValue = cellValue;
-			}
-			outPutValue += fnTerm.evaluateTerm(cellValue);
 		}
 		return new CalculatedPoint(xValue, yValue, outPutValue, dataRow.getKey());
 	}
@@ -338,6 +353,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 				for (int i = 0; i < numDataColumns; i++) {
 					DataColumnSpec columnSpec = inSpecs[DATA_TABLE_IN_PORT].getColumnSpec(i);
 					String colName = columnSpec.getName();
+					System.out.println(colName);
 					m_dataTableColumnNames.add(colName);
 					if (columnSpec.getType().isCompatible(DoubleValue.class)) {
 						numNumericColumns++;
@@ -384,7 +400,9 @@ public class MVLRGraphNodeModel extends NodeModel {
 	}
 
 	private DataColumnSpec createCalcValsOutputColumnSpec() {
-		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_colName, m_targetType);
+//		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_colName, m_targetType);
+		//testing non dynamic output column type
+		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_colName, DoubleCell.TYPE);
 		DataColumnSpec newColSpec = newColSpecCreator.createSpec();
 		return newColSpec;
 	}
@@ -430,20 +448,20 @@ public class MVLRGraphNodeModel extends NodeModel {
 				int numCalcPoints = modelContent.getInt(INTERNAL_MODEL_NUM_CALC_POINT_KEY);
 				m_termSet = new LinkedHashSet<FunctionTerm>();
 				m_calcPoints = new CalculatedPoint[numCalcPoints];
-				for(int i = 0; i < numFnTerms; i ++) {
+				for (int i = 0; i < numFnTerms; i++) {
 					FunctionTerm newTerm = new FunctionTerm();
 					ModelContentRO subContent = modelContent.getModelContent(INTERNAL_MODEL_TERM_KEY + i);
 					newTerm.loadFrom(subContent);
 					m_termSet.add(newTerm);
 				}
-				
-				for(int i = 0; i < numCalcPoints; i ++) {
+
+				for (int i = 0; i < numCalcPoints; i++) {
 					CalculatedPoint newPoint = new CalculatedPoint();
 					ModelContentRO subContent = modelContent.getModelContent(INTERNAL_MODEL_POINT_KEY + i);
 					newPoint.loadFrom(subContent);
 					m_calcPoints[i] = newPoint;
 				}
-				
+
 			} catch (InvalidSettingsException e) {
 				throw new IOException("There was a problem loading the internal state of this node.");
 			}

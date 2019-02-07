@@ -130,8 +130,10 @@ public class FunctionTerm {
 		return  this.getVarName().hashCode() + 
 				(int) this.getCoefficient() +
 				this.getExponent() +  
-				boolSwitch + 
-				this.domain.hashCode();
+				boolSwitch 
+//				+ 
+//				this.domain.hashCode()
+				;
 	}
 
 	@Override
@@ -156,10 +158,10 @@ public class FunctionTerm {
 		if (this.isConstant != otherTerm.getIsConstant()) {
 			return false;
 		}
-		if(!this.domain.getLowerBound().equals(otherTerm.getLowerBound()) ||
-				this.domain.getUpperBound().equals(otherTerm.getUpperBound())) {
-			return false;
-		}
+//		if(!this.domain.getLowerBound().equals(otherTerm.getLowerBound()) ||
+//				this.domain.getUpperBound().equals(otherTerm.getUpperBound())) {
+//			return false;
+//		}
 		return true;
 	}
 

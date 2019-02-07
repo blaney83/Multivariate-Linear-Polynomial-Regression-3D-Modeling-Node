@@ -12,28 +12,34 @@ import org.knime.core.data.DoubleValue;
 import org.knime.core.data.container.SingleCellFactory;
 import org.knime.core.data.def.DoubleCell;
 
-public class MVLRGraphCellFactory extends SingleCellFactory{
+public class MVLRGraphCellFactory extends SingleCellFactory {
 	private final DataTableSpec tableSpec;
 	private final Set<FunctionTerm> functionTerms;
-	
-	public MVLRGraphCellFactory(final DataColumnSpec newColSpec, final DataTableSpec tableSpec, final Set<FunctionTerm> functionTerms) {
+
+	public MVLRGraphCellFactory(final DataColumnSpec newColSpec, final DataTableSpec tableSpec,
+			final Set<FunctionTerm> functionTerms) {
 		super(newColSpec);
 		this.tableSpec = tableSpec;
 		this.functionTerms = new LinkedHashSet<FunctionTerm>(functionTerms);
 	}
-	
+
 	@Override
 	public DataCell getCell(final DataRow row) {
 		double outPutValue = 0;
 		for (FunctionTerm fnTerm : functionTerms) {
 			int colIndex = tableSpec.findColumnIndex(fnTerm.getVarName());
-			DataCell currentCell = row.getCell(colIndex);
-			if (currentCell.isMissing()) {
-				return DataType.getMissingCell();
-			}
-			double cellValue = ((DoubleValue) row.getCell(colIndex)).getDoubleValue();
+			if (colIndex > -1) {
+				DataCell currentCell = row.getCell(colIndex);
+				if (currentCell.isMissing()) {
+					return DataType.getMissingCell();
+				}
+				double cellValue = ((DoubleValue) row.getCell(colIndex)).getDoubleValue();
 
-			outPutValue += fnTerm.evaluateTerm(cellValue);
+				outPutValue += fnTerm.evaluateTerm(cellValue);
+			}else {
+				//handle intercept
+				outPutValue += fnTerm.evaluateTerm(0);
+			}
 		}
 		return new DoubleCell(outPutValue);
 	}
