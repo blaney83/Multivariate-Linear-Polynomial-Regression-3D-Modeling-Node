@@ -18,6 +18,7 @@
          point="org.knime.workbench.repository.nodes">
       <node
             category-path="/"
+            deprecated="false"
             factory-class="io.github.blaney83.mvlrgraph.MVLRGraphNodeFactory"
             id="io.github.blaney83.mvlrgraph.MVLRGraphNodeFactory"/>
    </extension>

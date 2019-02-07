@@ -2,6 +2,7 @@ package io.github.blaney83.mvlrgraph;
 
 import java.util.Set;
 
+
 import javax.swing.JMenuItem;
 
 import org.knime.core.node.NodeView;
@@ -63,9 +64,9 @@ public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel>
 
         // TODO retrieve the new model from your nodemodel and 
         // update the view.
-        MVLRGraphNodeModel nodeModel = 
-            (MVLRGraphNodeModel)getNodeModel();
-        assert nodeModel != null;
+//        MVLRGraphNodeModel nodeModel = 
+//            (MVLRGraphNodeModel)getNodeModel();
+//        assert nodeModel != null;
         
         // be aware of a possibly not executed nodeModel! The data you retrieve
         // from your nodemodel could be null, emtpy, or invalid in any kind.

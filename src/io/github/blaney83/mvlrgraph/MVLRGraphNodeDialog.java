@@ -69,6 +69,12 @@ public class MVLRGraphNodeDialog extends DefaultNodeSettingsPane {
         				MVLRGraphNodeModel.CFGKEY_APPEND_CALCULATED_TARGET,
         				MVLRGraphNodeModel.DEFAULT_APPEND_CALCULATED_TARGET), 
         				"Append new column with calculated values?"));
+        
+        addDialogComponent(new DialogComponentBoolean(
+        		new SettingsModelBoolean(
+        				MVLRGraphNodeModel.CFGKEY_IS_H2O_NODE,
+        				MVLRGraphNodeModel.DEFAULT_IS_H2O_NODE), 
+        				"Are you using an H2O learner?"));
                     
     }
 }

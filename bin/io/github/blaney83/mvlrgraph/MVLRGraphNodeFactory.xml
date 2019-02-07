@@ -10,12 +10,15 @@
         <intro>Insert long description here...</intro>
         
         
-        <option name="short name of first option (like in the dialog)">description of first option</option>
-        <option name="short name of second option (like in the dialog)">description of second option</option>
+        <option name="Target Column">Select the target column used in the Regression Learner Node (z-axis): </option>
+        <option name="X Variable">Select the first of two variables to plotted on the regression plane (x-axis): </option>
+        <option name="Y Variable">Select the second of two variables to plotted on the regression plane (y-axis): </option>
+        <option name="Append Values?">Append new column with calculated values?</option>
+        <option name="H2O Learner?">Are you using an H2O node?</option>
         <!-- possibly more options that can also be grouped by tabs -->
         <!--
         <tab name="Standard Options">
-            <option name="short name of first option (like in the dialog)">description of first option</option>
+            <option name="short name of first option (like in the dialog)">Select the first of two variables to plotted on the regression plane (x-axis): </option>
             <option name="short name of second option (like in the dialog)">description of second option</option>
         </tab>
         <tab name="Advanced Options">
@@ -30,7 +33,7 @@
         <outPort index="0" name="Out-Port name">Outputs the input data table (not the coefficient table).</outPort>
     </ports>    
     <views>
-        <view index="0" name="name of first view">Description of first view...</view>
+        <view index="0" name="3D Regression Plot">Description of first view...</view>
         <!--view index="1" name="name of second view">Description of second view...</view-->
     </views>
 </knimeNode>
