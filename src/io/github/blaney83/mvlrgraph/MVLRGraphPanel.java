@@ -194,6 +194,9 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 		scatter.setWidth(5);
 //        chart = AWTChartComponentFactory.chart(Quality.Advanced, "newt");
 		chart.getScene().getGraph().add(scatter);
+		chart.getAxeLayout().setXAxeLabel(m_xName);
+		chart.getAxeLayout().setYAxeLabel(m_yName);
+		chart.getAxeLayout().setZAxeLabel(m_targetName);
 	}
 
 }

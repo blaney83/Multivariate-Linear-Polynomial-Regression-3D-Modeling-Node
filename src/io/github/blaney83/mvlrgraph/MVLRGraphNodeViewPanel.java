@@ -1,12 +1,13 @@
 package io.github.blaney83.mvlrgraph;
 
 import java.awt.BorderLayout;
-
+import java.awt.Canvas;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Panel;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -15,7 +16,12 @@ import javax.swing.JPanel;
 import org.jzy3d.analysis.AnalysisLauncher;
 import org.jzy3d.bridge.awt.FrameAWT;
 import org.jzy3d.bridge.swing.FrameSwing;
+import org.jzy3d.chart.Chart;
+import org.jzy3d.chart.ChartLauncher;
+import org.jzy3d.chart.controllers.camera.AbstractCameraController;
+import org.jzy3d.chart.controllers.mouse.camera.ICameraMouseController;
 import org.jzy3d.maths.Rectangle;
+import org.jzy3d.plot3d.rendering.canvas.CanvasAWT;
 
 
 public class MVLRGraphNodeViewPanel extends JPanel {
@@ -47,21 +53,28 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 
 		TitlePanel titlePanel = new TitlePanel(MVLRGraphNodeView.DEFAULT_GRAPH_TITLE);
 		add(titlePanel, BorderLayout.NORTH);
-		if (MVLRGraphNodeView.DEFAULT_GRAPH_EQUATION) {
-			EquationPanel eqPanel = new EquationPanel(nodeModel.m_termSet, m_targetName,
-					m_xName, m_yName);
-			add(eqPanel, BorderLayout.SOUTH);
-		}
+//		if (MVLRGraphNodeView.DEFAULT_GRAPH_EQUATION) {
+//			EquationPanel eqPanel = new EquationPanel(nodeModel.m_termSet, m_targetName,
+//					m_xName, m_yName);
+//			add(eqPanel, BorderLayout.SOUTH);
+//		}
 		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName);
-		try {
-			AnalysisLauncher.open(graphPanel);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+//		try {
+//			AnalysisLauncher.open(graphPanel);
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		Rectangle rect = new Rectangle(500, 500);
-		FrameAWT jFrame = new FrameAWT(graphPanel.initializeChart(), rect, "TESTING");
-		add(jFrame, BorderLayout.CENTER);
+		graphPanel.init();
+		Chart chart = graphPanel.getChart();
+		chart.addController((AbstractCameraController)ChartLauncher.configureControllers(chart, "", true, false));
+
+//		JPanel chartPanel = new JPanel();
+//		CanvasAWT chartCanvas = new CanvasAWT(chart.getFactory(), chart.getScene(), chart.getQuality());
+//		chartPanel.add(chartCanvas);
+		add((Canvas)chart.getCanvas(), BorderLayout.CENTER);
 
 	}
 
@@ -84,7 +97,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private final String graphTitle;
 		private static final int WIDTH = 25;
-		private static final int HEIGHT = 0;
+		private static final int HEIGHT = 30;
 
 		public TitlePanel(final String title) {
 			this.graphTitle = title;
@@ -109,7 +122,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	private final class EquationPanel extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private final Set<FunctionTerm> panelTerms;
-		private final String equationString;
+//		private final String equationString;
 		private final String targetCol;
 		private final String xCol;
 		private final String yCol;
@@ -121,45 +134,45 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 			this.targetCol = targetCol;
 			this.xCol = xCol;
 			this.yCol = yCol;
-			StringBuilder newBuilder = new StringBuilder("\u0192(" + targetCol + "\u209A) =");
-			int expIterator = 0;
-			for (FunctionTerm fnTerm : this.panelTerms) {
-				if (fnTerm.getExponent() > expIterator) {
-					expIterator = fnTerm.getExponent();
-				}
-			}
-			String interceptString = "";
-			for (int i = 1; i < expIterator + 1; i++) {
-				for (FunctionTerm fnTerm : this.panelTerms) {
-					if (fnTerm.getExponent() == i && !fnTerm.getVarName().toLowerCase().trim().contains("intercept")) {
-						String operand = " +";
-						if (fnTerm.getCoefficient() < 0) {
-							operand = " -";
-						}
-						if (fnTerm.getVarName().equals(this.xCol)) {
-							newBuilder.append(" %.2f" + fnTerm.getCoefficient() + fnTerm.getVarName() + "\u2098"
-									+ toSuperScript(fnTerm.getExponent()) + operand);
-						} else if (fnTerm.getVarName().equals(this.yCol)) {
-							newBuilder.append(" %.2f" + fnTerm.getCoefficient() + fnTerm.getVarName() + "\u2099"
-									+ toSuperScript(fnTerm.getExponent()) + operand);
-						} else if (fnTerm.getIsConstant()) {
-							this.hasConstants = true;
-							newBuilder.append(" %.2f" + fnTerm.getCoefficient() + fnTerm.getVarName() + "(\0304)"
-									+ valToSubscript(fnTerm.getValue()) + toSuperScript(fnTerm.getExponent())
-									+ operand);
-						}
-					} else if (i == expIterator && fnTerm.getVarName().toLowerCase().trim().contains("intercept")) {
-						String operand = " +";
-						if (fnTerm.getCoefficient() < 0) {
-							operand = " -";
-						}
-						interceptString = operand + fnTerm.getCoefficient();
-					}
-				}
-			}
-
-			newBuilder.append(interceptString);
-			this.equationString = newBuilder.toString();
+//			StringBuilder newBuilder = new StringBuilder("\u0192(" + targetCol + "\u209A) =");
+//			int expIterator = 0;
+//			for (FunctionTerm fnTerm : this.panelTerms) {
+//				if (fnTerm.getExponent() > expIterator) {
+//					expIterator = fnTerm.getExponent();
+//				}
+//			}
+//			String interceptString = "";
+//			for (int i = 1; i < expIterator + 1; i++) {
+//				for (FunctionTerm fnTerm : this.panelTerms) {
+//					if (fnTerm.getExponent() == i && !fnTerm.getVarName().toLowerCase().trim().contains("intercept")) {
+//						String operand = " +";
+//						if (fnTerm.getCoefficient() < 0) {
+//							operand = " -";
+//						}
+//						if (fnTerm.getVarName().equals(this.xCol)) {
+//							newBuilder.append(" %.2f" + fnTerm.getCoefficient() + fnTerm.getVarName() + "\u2098"
+//									+ toSuperScript(fnTerm.getExponent()) + operand);
+//						} else if (fnTerm.getVarName().equals(this.yCol)) {
+//							newBuilder.append(" %.2f" + fnTerm.getCoefficient() + fnTerm.getVarName() + "\u2099"
+//									+ toSuperScript(fnTerm.getExponent()) + operand);
+//						} else if (fnTerm.getIsConstant()) {
+//							this.hasConstants = true;
+//							newBuilder.append(" %.2f" + fnTerm.getCoefficient() + fnTerm.getVarName() + "(\0304)"
+//									+ valToSubscript(fnTerm.getValue()) + toSuperScript(fnTerm.getExponent())
+//									+ operand);
+//						}
+//					} else if (i == expIterator && fnTerm.getVarName().toLowerCase().trim().contains("intercept")) {
+//						String operand = " +";
+//						if (fnTerm.getCoefficient() < 0) {
+//							operand = " -";
+//						}
+//						interceptString = operand + fnTerm.getCoefficient();
+//					}
+//				}
+//			}
+//			setPreferredSize(new Dimension(40,40));
+//			newBuilder.append(interceptString);
+//			this.equationString = newBuilder.toString();
 		}
 
 		@Override
@@ -167,18 +180,18 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 			super.paintComponent(g);
 			Graphics2D g2D = (Graphics2D) g;
 
-			Font font = new Font("Arial", Font.BOLD, 20);
+			Font font = new Font("Arial", Font.BOLD, 14);
 			FontMetrics metrics = g2D.getFontMetrics(font);
-			int width = metrics.stringWidth(this.equationString);
-
-			g2D.setFont(font);
-
-			g2D.drawString(this.equationString, (getWidth() - width) / 2, 20);
+//			int width = metrics.stringWidth(this.equationString);
+//
+//			g2D.setFont(font);
+//			g2D.drawString(this.equationString.substring(0, equationString.length()/2), (getWidth() - width) / 2, 10);
+//			g2D.drawString(this.equationString.substring(equationString.length()/2), (getWidth() - width) / 2, 22);
 			if(this.hasConstants) {
-				font = new Font("Arial", Font.BOLD, 10);
+				font = new Font("Arial", Font.BOLD, 6);
 				String disclaimer = "*Variables set to their arithmetic mean display the constant used to calculate the equation in their subscripts.";
-				width = metrics.stringWidth(disclaimer);
-				g2D.drawString(disclaimer, (getWidth() - width) / 2, 30);
+				int width = metrics.stringWidth(disclaimer);
+				g2D.drawString(disclaimer, (getWidth() - width) / 2, 34);
 			}
 		}
 
