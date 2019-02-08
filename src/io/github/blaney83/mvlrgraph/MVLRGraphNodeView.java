@@ -26,7 +26,7 @@ public class MVLRGraphNodeView extends NodeView<MVLRGraphNodeModel>
 	public static final String CFGKEY_GRAPH_EQUATION = "graphEquation";
 	
 	//view defaults
-	static final String DEFAULT_GRAPH_TITLE = "Learned Regression Model vs. Real Data";
+	static final String DEFAULT_GRAPH_TITLE = "Regression Model (plane) & Real Data (scatter)";
 	static final boolean DEFAULT_GRAPH_EQUATION = true;
 	
 	//settings models
