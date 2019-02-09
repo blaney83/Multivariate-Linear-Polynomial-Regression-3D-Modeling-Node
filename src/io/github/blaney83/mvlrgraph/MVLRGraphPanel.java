@@ -1,13 +1,6 @@
 package io.github.blaney83.mvlrgraph;
 
-import java.awt.Graphics;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
 import java.util.Set;
-
-import javax.swing.JPanel;
 
 import org.jzy3d.analysis.AbstractAnalysis;
 import org.jzy3d.chart.factories.AWTChartComponentFactory;
@@ -22,10 +15,9 @@ import org.jzy3d.plot3d.builder.concrete.OrthonormalGrid;
 import org.jzy3d.plot3d.primitives.Scatter;
 import org.jzy3d.plot3d.primitives.Shape;
 import org.jzy3d.plot3d.rendering.canvas.Quality;
+import org.knime.core.data.property.ColorAttr;
 
 public class MVLRGraphPanel extends AbstractAnalysis {
-	// v1
-	private static final long serialVersionUID = 1L;
 	// panel internal fields
 	private String m_targetName;
 	private String m_xName;
@@ -34,59 +26,41 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 	// external view data
 	private Set<FunctionTerm> m_termSet;
 	private CalculatedPoint[] m_calcPoints;
+	private boolean m_showRegModel;
 
 	public MVLRGraphPanel(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName,
-			final String xName, final String yName) {
+			final String xName, final String yName, final boolean showModel) {
 		m_termSet = termSet;
 		m_calcPoints = calcPoints;
 		m_targetName = targetName;
 		m_xName = xName;
 		m_yName = yName;
+		m_showRegModel = showModel;
 		// setPreferredSize(new Dimension(width, height));
 	}
 
 	public void updateView(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName,
-			final String xName, final String yName) {
+			final String xName, final String yName, final boolean showModel) {
 		m_termSet = termSet;
 		m_calcPoints = calcPoints;
 		m_targetName = targetName;
 		m_xName = xName;
 		m_yName = yName;
+		m_showRegModel = showModel;
 	}
 
 	@Override
 	public void init() {
-		// Define a function to plot
-//        Mapper mapper = new Mapper() {
-//            @Override
-//            public double f(double x, double y) {
-//                return x * Math.sin(x * y);
-//            }
-//        };
-//
-//        // Define range and precision for the function to plot
-//        Range range = new Range(-3, 3);
-//        int steps = 80;
-//
-//        // Create the object to represent the function over the given range.
-//        final Shape surface = Builder.buildOrthonormal(new OrthonormalGrid(range, steps, range, steps), mapper);
-//        surface.setColorMapper(new ColorMapper(new ColorMapRainbow(), surface.getBounds().getZmin(), surface.getBounds().getZmax(), new Color(1, 1, 1, .5f)));
-//        surface.setFaceDisplayed(true);
-//        surface.setWireframeDisplayed(false);
-//
-//        // Create a chart
-//        chart = AWTChartComponentFactory.chart(Quality.Advanced, getCanvasType());
-//        chart.getScene().getGraph().add(surface);
 		FunctionTerm xTerm = new FunctionTerm();
 		FunctionTerm yTerm = new FunctionTerm();
 		int count = 0;
 		for (FunctionTerm fnTerm : m_termSet) {
 			if (fnTerm.getVarName() != null) {
-				System.out.println("FN" + count + " " + fnTerm.getVarName() + " val: " +
-//						fnTerm.getValue() + 
-						" coeff: " + fnTerm.getCoefficient() + " exp: " + fnTerm.getExponent() + " f(1): "
-						+ fnTerm.evaluateTerm(1) + " lower bound: " + fnTerm.getLowerBound() + " upper bound : "
-						+ fnTerm.getUpperBound() + " const: " + fnTerm.getIsConstant());
+//				System.out.println("FN" + count + " " + fnTerm.getVarName() + " val: " +
+////						fnTerm.getValue() + 
+//						" coeff: " + fnTerm.getCoefficient() + " exp: " + fnTerm.getExponent() + " f(1): "
+//						+ fnTerm.evaluateTerm(1) + " lower bound: " + fnTerm.getLowerBound() + " upper bound : "
+//						+ fnTerm.getUpperBound() + " const: " + fnTerm.getIsConstant());
 				if (fnTerm.getVarName().equals(m_xName)) {
 					xTerm = fnTerm;
 				} else if (fnTerm.getVarName().equals(m_yName)) {
@@ -112,22 +86,22 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 					if (fnTerm.getVarName() != null) {
 						if (!fnTerm.getVarName().equals(m_xName) && !fnTerm.getVarName().equals(m_yName)
 								&& fnTerm.getIsConstant()) {
-            				System.out.println(fnTerm.getValue());
-            				System.out.println(fnTerm.evaluateTerm(0));
-            				System.out.println(z);
-            				System.out.println("should fire for constants");
-            					z += fnTerm.evaluateTerm(0);
+//            				System.out.println(fnTerm.getValue());
+//            				System.out.println(fnTerm.evaluateTerm(0));
+//            				System.out.println(z);
+//            				System.out.println("should fire for constants");
+							z += fnTerm.evaluateTerm(0);
 						} else if (fnTerm.getVarName().equals(m_xName) && !fnTerm.getIsConstant()) {
-            				System.out.println(fnTerm.evaluateTerm(x));
-            				System.out.println(fnTerm.evaluateTerm(0));
-            				System.out.println(z);
-            				System.out.println("should fire for x");
+//            				System.out.println(fnTerm.evaluateTerm(x));
+//            				System.out.println(fnTerm.evaluateTerm(0));
+//            				System.out.println(z);
+//            				System.out.println("should fire for x");
 							z += fnTerm.evaluateTerm(x);
 						} else if (fnTerm.getVarName().equals(m_yName) && !fnTerm.getIsConstant()) {
-            				System.out.println(fnTerm.evaluateTerm(y));
-            				System.out.println(fnTerm.evaluateTerm(0));
-            				System.out.println(z);
-            				System.out.println("should fire for y");
+//            				System.out.println(fnTerm.evaluateTerm(y));
+//            				System.out.println(fnTerm.evaluateTerm(0));
+//            				System.out.println(z);
+//            				System.out.println("should fire for y");
 							z += fnTerm.evaluateTerm(y);
 						}
 					}
@@ -151,23 +125,25 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 			yMax = yTerm.getUpperBound();
 		}
 
-		System.out.println(xMax);
-		System.out.println(xMin);
-		System.out.println(yMax);
-		System.out.println(yMin);
+//		System.out.println(xMax);
+//		System.out.println(xMin);
+//		System.out.println(yMax);
+//		System.out.println(yMin);
 		Range xRange = new Range((float) xMin, (float) xMax);
 		Range yRange = new Range((float) yMin, (float) yMax);
 
 		int steps = 80;
-
-		Shape surface = Builder.buildOrthonormal(new OrthonormalGrid(xRange, steps, yRange, steps), mapper);
-		surface.setColorMapper(new ColorMapper(new ColorMapRainbow(), surface.getBounds().getZmin(),
-				surface.getBounds().getZmax(), new Color(1, 1, 1, .5f)));
-		surface.setFaceDisplayed(true);
-		surface.setWireframeDisplayed(false);
-
 		chart = AWTChartComponentFactory.chart(Quality.Advanced, getCanvasType());
-		chart.getScene().getGraph().add(surface);
+
+		if (m_showRegModel) {
+			Shape surface = Builder.buildOrthonormal(new OrthonormalGrid(xRange, steps, yRange, steps), mapper);
+			surface.setColorMapper(new ColorMapper(new ColorMapRainbow(), surface.getBounds().getZmin(),
+					surface.getBounds().getZmax(), new Color(1, 1, 1, .5f)));
+			surface.setFaceDisplayed(true);
+			surface.setWireframeDisplayed(false);
+
+			chart.getScene().getGraph().add(surface);
+		}
 
 		// scatter
 		Coord3d[] points = new Coord3d[m_calcPoints.length];
@@ -181,13 +157,24 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 //			System.out.println(m_calcPoints[i].getXValue());
 //			System.out.println(m_calcPoints[i].getYValue());
 //			System.out.println(m_calcPoints[i].getZValue());
-			System.out.println(m_calcPoints[i].getPercentError());
+//			System.out.println(m_calcPoints[i].getPercentError());
 			x = (float) m_calcPoints[i].getXValue();
 			y = (float) m_calcPoints[i].getYValue();
 			z = (float) m_calcPoints[i].getZValue();
 			Coord3d pointCoord = new Coord3d(x, y, z);
 			points[i] = pointCoord;
-			colors[i] = new Color((int)(255*Math.abs(m_calcPoints[i].getPercentError())), (int)(255*(1-Math.abs(m_calcPoints[i].getPercentError()))), 0);
+			colors[i] = new Color((int) (255 * Math.abs(m_calcPoints[i].getPercentError())),
+					(int) (255 * (1 - Math.abs(m_calcPoints[i].getPercentError()))), 0);
+			if (m_calcPoints[i].isHilited()) {
+				colors[i] = new Color(ColorAttr.HILITE.getRed(), ColorAttr.HILITE.getGreen(),
+						ColorAttr.HILITE.getBlue(), ColorAttr.HILITE.getAlpha());
+			} else if (m_calcPoints[i].isSelected()) {
+				colors[i] = new Color(ColorAttr.SELECTED.getRed(), ColorAttr.SELECTED.getGreen(),
+						ColorAttr.SELECTED.getBlue(), ColorAttr.SELECTED.getAlpha());
+			} else if (m_calcPoints[i].isSelected() && m_calcPoints[i].isHilited()) {
+				colors[i] = new Color(ColorAttr.SELECTED_HILITE.getRed(), ColorAttr.SELECTED_HILITE.getGreen(),
+						ColorAttr.SELECTED_HILITE.getBlue(), ColorAttr.SELECTED_HILITE.getAlpha());
+			}
 		}
 
 		Scatter scatter = new Scatter(points, colors);

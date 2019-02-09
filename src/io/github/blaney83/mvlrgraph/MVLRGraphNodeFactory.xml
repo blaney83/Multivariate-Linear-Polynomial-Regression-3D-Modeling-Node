@@ -9,12 +9,16 @@
     <fullDescription>
         <intro>Insert long description here...</intro>
         
-        
+                <tab name="Standard Options">
         <option name="Target Column">Select the target column used in the Regression Learner Node (z-axis): </option>
         <option name="X Variable">Select the first of two variables to plotted on the regression plane (x-axis): </option>
         <option name="Y Variable">Select the second of two variables to plotted on the regression plane (y-axis): </option>
         <option name="Append Values?">Append new column with calculated values?</option>
         <option name="H2O Learner?">Are you using an H2O node?</option>
+        </tab>
+                <tab name="View Options">
+            <option name="short name of first advanced option (like in the dialog)">description of first advanced option</option>
+        </tab>
         <!-- possibly more options that can also be grouped by tabs -->
         <!--
         <tab name="Standard Options">

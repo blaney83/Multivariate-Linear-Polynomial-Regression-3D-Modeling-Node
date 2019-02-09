@@ -40,6 +40,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	// external view data
 	private Set<FunctionTerm> m_termSet;
 	private CalculatedPoint[] m_calcPoints;
+	private boolean m_showRegModel;
 
 	public MVLRGraphNodeViewPanel(final MVLRGraphNodeModel nodeModel){
 		this.m_termSet = nodeModel.m_termSet;
@@ -47,6 +48,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 		this.m_targetName = nodeModel.m_colName.getStringValue();
 		this.m_xName = nodeModel.m_xAxisVarColumn.getStringValue();
 		this.m_yName = nodeModel.m_yAxisVarColumn.getStringValue();
+		this.m_showRegModel = nodeModel.m_showRegressionModel.getBooleanValue();
 
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		setLayout(new BorderLayout());
@@ -58,7 +60,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 //					m_xName, m_yName);
 //			add(eqPanel, BorderLayout.SOUTH);
 //		}
-		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName);
+		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName, m_showRegModel);
 		
 //		try {
 //			AnalysisLauncher.open(graphPanel);

@@ -25,6 +25,7 @@ import org.knime.core.data.def.DoubleCell;
 import org.knime.core.node.BufferedDataTable;
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
+import org.knime.core.node.defaultnodesettings.SettingsModelColumnFilter2;
 import org.knime.core.node.defaultnodesettings.SettingsModelColumnName;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 
@@ -49,6 +50,18 @@ import org.knime.core.node.NodeSettingsWO;
  *
  * @author Benjamin Laney
  */
+
+
+//to do
+// add column picker and make it state dependent (live reload, exclusive)
+// add yes/no show regression model graph
+// add view pane to dialog
+// enable view loading
+// make sure update models all work
+// update factory.xml
+// complete read me
+// OPTIONAL:
+// enable selection
 public class MVLRGraphNodeModel extends NodeModel {
 
 	// inport fields
@@ -64,10 +77,13 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// internal config keys
 	static final String CFGKEY_COUNT = "count";
 	static final String CFGKEY_COL_NAME = "columnName";
+	static final String CFGKEY_COL_FILTER = "colFilter";
 	static final String CFGKEY_X_AXIS_VAR_COLUMN = "xAxisVarColumn";
 	static final String CFGKEY_Y_AXIS_VAR_COLUMN = "yAxisVarColumn";
 	static final String CFGKEY_APPEND_CALCULATED_TARGET = "calculatedTarget";
 	static final String CFGKEY_NUM_APPROX_COLUMN = "numApproxColumns";
+	static final String CFGKEY_SHOW_ALL = "showAllData";
+	static final String CFGKEY_SHOW_REG_MODEL = "showRegressionModel";
 	static final String CFGKEY_IS_H2O_NODE = "isH2ONode";
 	// enum for intercept?
 	// save/load cfg keys
@@ -76,13 +92,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 	static final String INTERNAL_MODEL_NUM_CALC_POINT_KEY = "numCalcPoints";
 	static final String INTERNAL_MODEL_TERM_KEY = "fnTerm";
 	static final String INTERNAL_MODEL_POINT_KEY = "calcPoint";
-	// if R^k=>R where k>2, then let them pick which columns to assign as mean
-	// values (leaving 2 columns for x and y), with z = R
-	// give options for mean values as the coefficients table displayed with the
-	// coefficient (to help pick less significant values)
-	// future: MAYBE append new column with calculated values for each row
-	// NOTE: recommend Laplace evaluation (to derive larger coefficients and more
-	// values with 0 as coefficient)
+
 	// view options
 	// color rainbow- under, on, over
 	// opacity of planar field
@@ -91,6 +101,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 	static final int DEFAULT_COUNT = 100;
 	static final boolean DEFAULT_APPEND_CALCULATED_TARGET = false;
 	static final boolean DEFAULT_IS_H2O_NODE = false;
+	static final boolean DEFAULT_SHOW_ALL_DATA = false;
+	static final boolean DEFAULT_SHOW_REG_MODEL = true;
 
 	// settings model
 	private final SettingsModelIntegerBounded m_count = new SettingsModelIntegerBounded(MVLRGraphNodeModel.CFGKEY_COUNT,
@@ -102,7 +114,12 @@ public class MVLRGraphNodeModel extends NodeModel {
 			"");
 	protected final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
 			CFGKEY_APPEND_CALCULATED_TARGET, DEFAULT_APPEND_CALCULATED_TARGET);
+	protected final SettingsModelBoolean m_showAllData = new SettingsModelBoolean(
+			CFGKEY_SHOW_ALL, DEFAULT_SHOW_ALL_DATA);
+	protected final SettingsModelBoolean m_showRegressionModel = new SettingsModelBoolean(CFGKEY_SHOW_REG_MODEL, DEFAULT_SHOW_REG_MODEL);
 	private final SettingsModelBoolean m_isH2ONode = new SettingsModelBoolean(CFGKEY_IS_H2O_NODE, DEFAULT_IS_H2O_NODE);
+	
+	public final SettingsModelColumnFilter2 m_settingsColumnFilter = new SettingsModelColumnFilter2(CFGKEY_COL_FILTER, DoubleValue.class);
 
 	// INTERNAL NODE FIELDS
 	// model inter-method variables
@@ -125,33 +142,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 	@Override
 	protected BufferedDataTable[] execute(final BufferedDataTable[] inData, final ExecutionContext exec)
 			throws Exception {
-		// finish validation
-		//
-		// at this point we are assuming that m_variableColNames.length -
-		// m_approxColNameArr = 2
-		//
-		// determine domain for each variable (also get the mean if the variable is
-		// contained in the m_approxColNameArr
-		// and also gets the domain of the target column?)
-		//
-		// then build a formula factory
-		// that returns an array of points
-		// then build the cell factory (maybe in the formula factory, or maybe the
-		// formula factory returns itself and it has
-		// the array of points, the formula itself, and the column to append, if
-		// necessary)
 
-		// CURRENT STOPPING POINT- need to create the column appender, etc., if append =
-		// true
-		// use the Calculated point zValue in the loop to create the values for the new
-		// cells
-		// then set a buffered data table = the input and conditionally reassign it to
-		// the new
-		// column appender before returning it to finish out the execute method.
-		// may need to create some global storage for some of the information I created
-		// (such as the calcpointArr so the view can see it and maybe a global formula,
-		// holidng
-		// the domains for the x,y,z and the function for the graph mapping
 		m_variableColNames = new ArrayList<String>();
 		m_termSet = new LinkedHashSet<FunctionTerm>();
 
@@ -164,16 +155,17 @@ public class MVLRGraphNodeModel extends NodeModel {
 			processColumn(dataTable, fnTerm);
 		}
 
-		if (m_count.getIntValue() > dataTable.size() || m_appendCalculatedTarget.getBooleanValue()) {
+		if (m_count.getIntValue() > dataTable.size() || m_showAllData.getBooleanValue()) {
 			m_count.setIntValue((int) dataTable.size());
 		}
+		
 		m_calcPoints = new CalculatedPoint[m_count.getIntValue()];
 		int iterations = 0;
 		for (DataRow dataRow : dataTable) {
-			m_calcPoints[iterations] = pointFactory(dataRow, dataTable.getDataTableSpec());
 			if (iterations >= m_count.getIntValue()) {
 				break;
 			}
+			m_calcPoints[iterations] = pointFactory(dataRow, dataTable.getDataTableSpec());
 			iterations++;
 		}
 
@@ -184,7 +176,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 		ColumnRearranger outputTable = new ColumnRearranger(inData[DATA_TABLE_IN_PORT].getDataTableSpec());
 		outputTable.append(cellFactory);
 		bufferedOutput = exec.createColumnRearrangeTable(inData[DATA_TABLE_IN_PORT], outputTable, exec);
-		
 		if (!m_appendCalculatedTarget.getBooleanValue()) {
 			bufferedOutput = exec.createBufferedDataTable(inData[DATA_TABLE_IN_PORT], exec);
 		}
@@ -196,10 +187,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 			double coeff = Double.parseDouble(dataRow.getCell(m_inPort1CoeffColumnIndex).toString());
 			int exponent = 1;
 			if (m_inPort1ExponentIndex != -1) {
-				System.out.println("Firing");
-				System.out.println(m_inPort1ExponentIndex);
 				exponent = Integer.parseInt(dataRow.getCell(m_inPort1ExponentIndex).toString());
-				System.out.println(exponent);
 			}
 			if (!m_isH2ONode.getBooleanValue()) {
 				String varName = dataRow.getCell(m_inPort1VariableColumnIndex).toString();
@@ -216,7 +204,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 				}
 			}
 			throw new InterruptedExecutionException(
-					"The coefficient table you provided does not match with the columns of the data table. Please ensure that the column names and variables fields have not been altered by a previous node.");
+					"The coefficient table you provided does not match with the columns of the data table. Please ensure that the column names and variables fields have not been altered by a previous node AND your selected columns were used in the previous regression learner.");
 		}
 		return new FunctionTerm();
 	}
@@ -266,30 +254,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 		double xValue = ((DoubleValue) dataRow.getCell(xIndex)).getDoubleValue();
 		double yValue = ((DoubleValue) dataRow.getCell(yIndex)).getDoubleValue();
 		double outPutValue = ((DoubleValue) dataRow.getCell(targetIndex)).getDoubleValue();
-//		for (FunctionTerm fnTerm : m_termSet) {
-//			int colIndex = tableSpec.findColumnIndex(fnTerm.getVarName());
-//			if (colIndex > -1) {
-//				DataCell currentCell = dataRow.getCell(colIndex);
-//				// skip missing cells
-//				if (currentCell.isMissing()) {
-//					return new CalculatedPoint();
-//				}
-//				double cellValue = ((DoubleValue) dataRow.getCell(colIndex)).getDoubleValue();
-//				if (fnTerm.getVarName().contentEquals(m_xAxisVarColumn.getStringValue())) {
-//					xValue = cellValue;
-//				}
-//				if (fnTerm.getVarName().contentEquals(m_yAxisVarColumn.getStringValue())) {
-//					yValue = cellValue;
-//				}
-////				if (fnTerm.getVarName().contentEquals(m_colName.getStringValue())) {
-////					outPutValue = cellValue;
-////				}
-////				outPutValue += fnTerm.evaluateTerm(cellValue);
-//			} else {
-//				// intercept
-////				outPutValue += fnTerm.evaluateTerm(0);
-//			}
-//		}
 		return new CalculatedPoint(xValue, yValue, outPutValue, dataRow.getKey());
 	}
 
@@ -305,6 +269,18 @@ public class MVLRGraphNodeModel extends NodeModel {
 
 	@Override
 	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
+		List<DataColumnSpec> colList = new ArrayList<DataColumnSpec>();
+		for(DataColumnSpec colSpec : inSpecs[DATA_TABLE_IN_PORT]) {
+			if(!colSpec.getName().equals(m_colName.getStringValue())) {
+				colList.add(colSpec);
+			}
+		}
+		
+		DataColumnSpec[] filteredColumnSpecs = new DataColumnSpec[colList.size()];
+		filteredColumnSpecs = colList.toArray(filteredColumnSpecs);
+		DataTableSpec filteredSpec = new DataTableSpec(filteredColumnSpecs);
+		m_settingsColumnFilter.loadDefaults(filteredSpec);
+		
 		if (inSpecs[COEFFICIENT_IN_PORT] == null || inSpecs[DATA_TABLE_IN_PORT] == null) {
 			throw new InvalidSettingsException(
 					"Please provide a regression coefficient table to In-Port #1 and a data table to In-Port #2.");
@@ -323,8 +299,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 				for (String colName : coeffTableColumns) {
 					if (colName.toLowerCase().contains("exponent")) {
 						m_inPort1ExponentIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(colName);
-//						throw new InvalidSettingsException(
-//								"The function you are trying to graph appears to be a polynomial regression line. Please use only linear regression for this node.");
 					}
 					// alternately check for "coeff."
 					if (colName.toLowerCase().trim().contains("coeff") && inSpecs[COEFFICIENT_IN_PORT]
@@ -391,10 +365,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 			// for R^k=>R, where k > 2
 			// may run into issues when not all numeric columns were used in the regression
 			// learner (fix later)
-//			else if (numNumericColumns - m_numApproxColumns.getIntValue() > 3) {
-//				throw new InvalidSettingsException(
-//						"Please reduce the number of calculated columns in the selection area to 2 by transfering additional variables to the 'Approximate with mean value' category.");
-//			}
+
 			if (!containsTargetColumn) {
 				throw new InvalidSettingsException(
 						"You must select the column targeted in the Regression Learning Node for the target column.");
@@ -414,8 +385,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 	}
 
 	private DataColumnSpec createCalcValsOutputColumnSpec() {
-//		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_colName, m_targetType);
-		//testing non dynamic output column type
 		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_colName, DoubleCell.TYPE);
 		DataColumnSpec newColSpec = newColSpecCreator.createSpec();
 		return newColSpec;
@@ -428,6 +397,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 		m_xAxisVarColumn.saveSettingsTo(settings);
 		m_yAxisVarColumn.saveSettingsTo(settings);
 		m_appendCalculatedTarget.saveSettingsTo(settings);
+		m_showAllData.saveSettingsTo(settings);
+		m_showRegressionModel.saveSettingsTo(settings);
 		m_isH2ONode.saveSettingsTo(settings);
 	}
 
@@ -438,6 +409,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 		m_xAxisVarColumn.loadSettingsFrom(settings);
 		m_yAxisVarColumn.loadSettingsFrom(settings);
 		m_appendCalculatedTarget.loadSettingsFrom(settings);
+		m_showAllData.loadSettingsFrom(settings);
+		m_showRegressionModel.loadSettingsFrom(settings);
 		m_isH2ONode.loadSettingsFrom(settings);
 	}
 
@@ -448,6 +421,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 		m_xAxisVarColumn.validateSettings(settings);
 		m_yAxisVarColumn.validateSettings(settings);
 		m_appendCalculatedTarget.validateSettings(settings);
+		m_showAllData.validateSettings(settings);
+		m_showRegressionModel.validateSettings(settings);
 		m_isH2ONode.validateSettings(settings);
 	}
 
