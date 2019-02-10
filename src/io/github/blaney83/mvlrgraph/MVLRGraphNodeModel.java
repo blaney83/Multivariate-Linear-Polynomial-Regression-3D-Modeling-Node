@@ -53,16 +53,19 @@ import org.knime.core.node.NodeSettingsWO;
 
 
 //to do
-// add column picker and make it state dependent (live reload, exclusive)
-// add yes/no show regression model graph
-// add view pane to dialog
+// X add column picker and make it state dependent (live reload, exclusive)
+// X add yes/no show regression model graph
+// ON HOLD add view tab to dialog
 // enable view loading
 // make sure update models all work
 // update factory.xml
 // complete read me
 // OPTIONAL:
 // enable selection
+//*******re-write config method
 public class MVLRGraphNodeModel extends NodeModel {
+	
+	MVLRGraphSettings m_settings = new MVLRGraphSettings();
 
 	// inport fields
 	public static final int COEFFICIENT_IN_PORT = 0;
@@ -71,21 +74,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// Model Content File
 	private static final String FILE_NAME = "mvlrGraphInternals.xml";
 
-	// the logger instance
-//	private static final NodeLogger logger = NodeLogger.getLogger(MVLRGraphNodeModel.class);
-
-	// internal config keys
-	static final String CFGKEY_COUNT = "count";
-	static final String CFGKEY_COL_NAME = "columnName";
-	static final String CFGKEY_COL_FILTER = "colFilter";
-	static final String CFGKEY_X_AXIS_VAR_COLUMN = "xAxisVarColumn";
-	static final String CFGKEY_Y_AXIS_VAR_COLUMN = "yAxisVarColumn";
-	static final String CFGKEY_APPEND_CALCULATED_TARGET = "calculatedTarget";
-	static final String CFGKEY_NUM_APPROX_COLUMN = "numApproxColumns";
-	static final String CFGKEY_SHOW_ALL = "showAllData";
-	static final String CFGKEY_SHOW_REG_MODEL = "showRegressionModel";
-	static final String CFGKEY_IS_H2O_NODE = "isH2ONode";
-	// enum for intercept?
 	// save/load cfg keys
 	static final String INTERNAL_MODEL_NAME_KEY = "internalModel";
 	static final String INTERNAL_MODEL_NUM_FUNCTION_TERM_KEY = "numFnTerms";
@@ -96,6 +84,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// view options
 	// color rainbow- under, on, over
 	// opacity of planar field
+	//point size
 
 	// default settings fields
 	static final int DEFAULT_COUNT = 100;
@@ -104,31 +93,14 @@ public class MVLRGraphNodeModel extends NodeModel {
 	static final boolean DEFAULT_SHOW_ALL_DATA = false;
 	static final boolean DEFAULT_SHOW_REG_MODEL = true;
 
-	// settings model
-	private final SettingsModelIntegerBounded m_count = new SettingsModelIntegerBounded(MVLRGraphNodeModel.CFGKEY_COUNT,
-			MVLRGraphNodeModel.DEFAULT_COUNT, 0, Integer.MAX_VALUE);
-	protected final SettingsModelColumnName m_colName = new SettingsModelColumnName(CFGKEY_COL_NAME, "");
-	protected final SettingsModelColumnName m_xAxisVarColumn = new SettingsModelColumnName(CFGKEY_X_AXIS_VAR_COLUMN,
-			"");
-	protected final SettingsModelColumnName m_yAxisVarColumn = new SettingsModelColumnName(CFGKEY_Y_AXIS_VAR_COLUMN,
-			"");
-	protected final SettingsModelBoolean m_appendCalculatedTarget = new SettingsModelBoolean(
-			CFGKEY_APPEND_CALCULATED_TARGET, DEFAULT_APPEND_CALCULATED_TARGET);
-	protected final SettingsModelBoolean m_showAllData = new SettingsModelBoolean(
-			CFGKEY_SHOW_ALL, DEFAULT_SHOW_ALL_DATA);
-	protected final SettingsModelBoolean m_showRegressionModel = new SettingsModelBoolean(CFGKEY_SHOW_REG_MODEL, DEFAULT_SHOW_REG_MODEL);
-	private final SettingsModelBoolean m_isH2ONode = new SettingsModelBoolean(CFGKEY_IS_H2O_NODE, DEFAULT_IS_H2O_NODE);
-	
-	public final SettingsModelColumnFilter2 m_settingsColumnFilter = new SettingsModelColumnFilter2(CFGKEY_COL_FILTER, DoubleValue.class);
-
 	// INTERNAL NODE FIELDS
 	// model inter-method variables
-	protected List<String> m_variableColNames;
-	protected List<String> m_dataTableColumnNames;
-	protected int m_inPort1VariableColumnIndex;
-	protected int m_inPort1CoeffColumnIndex;
-	protected int m_inPort1ExponentIndex = -1;
-	protected DataType m_targetType;
+	private List<String> m_variableColNames;
+	private List<String> m_dataTableColumnNames;
+	private int m_inPort1VariableColumnIndex;
+	private int m_inPort1CoeffColumnIndex;
+	private int m_inPort1ExponentIndex = -1;
+	private boolean m_isH2ONode = false;
 
 	// view dependent fields
 	protected Set<FunctionTerm> m_termSet;
@@ -151,18 +123,27 @@ public class MVLRGraphNodeModel extends NodeModel {
 			m_termSet.add(validateCoeffVariables(row));
 		}
 		BufferedDataTable dataTable = inData[DATA_TABLE_IN_PORT];
+		Set<String> correctRegressionColumnsSelected = new LinkedHashSet<String>();
+
 		for (FunctionTerm fnTerm : m_termSet) {
+			if(fnTerm.getVarName().equals(m_settings.getXAxisVarColumn()) || fnTerm.getVarName().equals(m_settings.getYAxisVarColumn())) {
+				correctRegressionColumnsSelected.add(fnTerm.getVarName());
+			}
 			processColumn(dataTable, fnTerm);
 		}
+		if(correctRegressionColumnsSelected.size() != 2) {
+			throw new InvalidSettingsException("The columns you chose do not match with the columns modeled by the Regression Model. "
+					+ "Please ensure the two selected columns were used in the creation of the Regression Equation.");
+		}
 
-		if (m_count.getIntValue() > dataTable.size() || m_showAllData.getBooleanValue()) {
-			m_count.setIntValue((int) dataTable.size());
+		if (m_settings.getCount() > dataTable.size() || m_settings.getShowAllData()) {
+			m_settings.setCount((int) dataTable.size());
 		}
 		
-		m_calcPoints = new CalculatedPoint[m_count.getIntValue()];
+		m_calcPoints = new CalculatedPoint[m_settings.getCount()];
 		int iterations = 0;
 		for (DataRow dataRow : dataTable) {
-			if (iterations >= m_count.getIntValue()) {
+			if (iterations >= m_settings.getCount()) {
 				break;
 			}
 			m_calcPoints[iterations] = pointFactory(dataRow, dataTable.getDataTableSpec());
@@ -176,7 +157,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 		ColumnRearranger outputTable = new ColumnRearranger(inData[DATA_TABLE_IN_PORT].getDataTableSpec());
 		outputTable.append(cellFactory);
 		bufferedOutput = exec.createColumnRearrangeTable(inData[DATA_TABLE_IN_PORT], outputTable, exec);
-		if (!m_appendCalculatedTarget.getBooleanValue()) {
+		if (!m_settings.getAppendColumn()) {
 			bufferedOutput = exec.createBufferedDataTable(inData[DATA_TABLE_IN_PORT], exec);
 		}
 		return new BufferedDataTable[] { bufferedOutput };
@@ -189,9 +170,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 			if (m_inPort1ExponentIndex != -1) {
 				exponent = Integer.parseInt(dataRow.getCell(m_inPort1ExponentIndex).toString());
 			}
-			if (!m_isH2ONode.getBooleanValue()) {
+			if (!m_isH2ONode) {
 				String varName = dataRow.getCell(m_inPort1VariableColumnIndex).toString();
-				System.out.println(varName);
 				if (m_dataTableColumnNames.contains(varName) || varName.toLowerCase().trim().equals("intercept")) {
 					m_variableColNames.add(varName);
 					return new FunctionTerm(varName, coeff, exponent);
@@ -233,8 +213,8 @@ public class MVLRGraphNodeModel extends NodeModel {
 			colDomainCreator.setLowerBound(new DoubleCell(lowerBound));
 			colDomainCreator.setUpperBound(new DoubleCell(upperBound));
 			fnTerm.setDomain(colDomainCreator.createDomain());
-			if (!colName.equals(m_colName.getStringValue()) && !colName.equals(m_xAxisVarColumn.getStringValue())
-					&& !colName.equals(m_yAxisVarColumn.getStringValue())) {
+			if (!colName.equals(m_settings.getColName()) && !colName.equals(m_settings.getXAxisVarColumn())
+					&& !colName.equals(m_settings.getYAxisVarColumn())) {
 				fnTerm.setValue(meanSum / totalRows);
 			}
 		} else {
@@ -248,9 +228,9 @@ public class MVLRGraphNodeModel extends NodeModel {
 	}
 
 	private CalculatedPoint pointFactory(final DataRow dataRow, final DataTableSpec tableSpec) {
-		int targetIndex = tableSpec.findColumnIndex(m_colName.getStringValue());
-		int xIndex = tableSpec.findColumnIndex(m_xAxisVarColumn.getStringValue());
-		int yIndex = tableSpec.findColumnIndex(m_yAxisVarColumn.getStringValue());
+		int targetIndex = tableSpec.findColumnIndex(m_settings.getColName());
+		int xIndex = tableSpec.findColumnIndex(m_settings.getXAxisVarColumn());
+		int yIndex = tableSpec.findColumnIndex(m_settings.getYAxisVarColumn());
 		double xValue = ((DoubleValue) dataRow.getCell(xIndex)).getDoubleValue();
 		double yValue = ((DoubleValue) dataRow.getCell(yIndex)).getDoubleValue();
 		double outPutValue = ((DoubleValue) dataRow.getCell(targetIndex)).getDoubleValue();
@@ -269,17 +249,10 @@ public class MVLRGraphNodeModel extends NodeModel {
 
 	@Override
 	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
-		List<DataColumnSpec> colList = new ArrayList<DataColumnSpec>();
-		for(DataColumnSpec colSpec : inSpecs[DATA_TABLE_IN_PORT]) {
-			if(!colSpec.getName().equals(m_colName.getStringValue())) {
-				colList.add(colSpec);
-			}
-		}
 		
-		DataColumnSpec[] filteredColumnSpecs = new DataColumnSpec[colList.size()];
-		filteredColumnSpecs = colList.toArray(filteredColumnSpecs);
-		DataTableSpec filteredSpec = new DataTableSpec(filteredColumnSpecs);
-		m_settingsColumnFilter.loadDefaults(filteredSpec);
+		if(m_settings.getColName() == null) {
+			throw new InvalidSettingsException("No target column selected");
+		}
 		
 		if (inSpecs[COEFFICIENT_IN_PORT] == null || inSpecs[DATA_TABLE_IN_PORT] == null) {
 			throw new InvalidSettingsException(
@@ -301,24 +274,26 @@ public class MVLRGraphNodeModel extends NodeModel {
 						m_inPort1ExponentIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(colName);
 					}
 					// alternately check for "coeff."
-					if (colName.toLowerCase().trim().contains("coeff") && inSpecs[COEFFICIENT_IN_PORT]
+					if (colName.toLowerCase().trim().equals("coeff.") && inSpecs[COEFFICIENT_IN_PORT]
 							.getColumnSpec(colName).getType().isCompatible(DoubleValue.class)) {
 						m_inPort1CoeffColumnIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(colName);
 						hasCoefficientColumn = true;
 					}
-					if (colName.toLowerCase().trim().equals("variable") && inSpecs[COEFFICIENT_IN_PORT]
+					if (colName.toLowerCase().trim().contains("variable") && inSpecs[COEFFICIENT_IN_PORT]
 							.getColumnSpec(colName).getType().isCompatible(StringValue.class)) {
 						m_inPort1VariableColumnIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(colName);
 						hasVariableColumn = true;
 					}
 				}
 			} else if (coeffTableColumns != null && // checking for H20 regression output
-					coeffTableColumns.length == 1 && coeffTableColumns[0].toLowerCase().trim() == "beta"
+					coeffTableColumns.length == 1 && coeffTableColumns[0].toLowerCase().trim().equals("beta")
 					&& inSpecs[COEFFICIENT_IN_PORT].getColumnSpec(coeffTableColumns[0]).getType()
 							.isCompatible(DoubleValue.class)) {
+				
 				m_inPort1CoeffColumnIndex = inSpecs[COEFFICIENT_IN_PORT].findColumnIndex(coeffTableColumns[0]);
-				m_isH2ONode.setBooleanValue(true);
+				m_isH2ONode = true;
 				hasCoefficientColumn = true;
+				hasVariableColumn = true;
 			}
 			if (!hasCoefficientColumn) {
 				throw new InvalidSettingsException(
@@ -341,18 +316,16 @@ public class MVLRGraphNodeModel extends NodeModel {
 				for (int i = 0; i < numDataColumns; i++) {
 					DataColumnSpec columnSpec = inSpecs[DATA_TABLE_IN_PORT].getColumnSpec(i);
 					String colName = columnSpec.getName();
-					System.out.println(colName);
 					m_dataTableColumnNames.add(colName);
 					if (columnSpec.getType().isCompatible(DoubleValue.class)) {
 						numNumericColumns++;
-						if (m_colName != null && colName.contentEquals(m_colName.getStringValue())) {
-							m_targetType = columnSpec.getType();
+						if (m_settings.getColName() != null && colName.contentEquals(m_settings.getColName())) {
 							containsTargetColumn = true;
 						}
-						if (m_xAxisVarColumn != null && colName.contentEquals(m_xAxisVarColumn.getStringValue())) {
+						if (m_settings.getXAxisVarColumn() != null && colName.contentEquals(m_settings.getXAxisVarColumn())) {
 							containsXCol = true;
 						}
-						if (m_yAxisVarColumn != null && colName.contentEquals(m_yAxisVarColumn.getStringValue())) {
+						if (m_settings.getYAxisVarColumn() != null && colName.contentEquals(m_settings.getYAxisVarColumn())) {
 							containsYCol = true;
 						}
 					}
@@ -362,9 +335,6 @@ public class MVLRGraphNodeModel extends NodeModel {
 				throw new InvalidSettingsException(
 						"The data table provided must contain 2 or more numeric columns which correspond to the variables in the regression equation and 1 numeric target column (same as was selected during regression learning).");
 			}
-			// for R^k=>R, where k > 2
-			// may run into issues when not all numeric columns were used in the regression
-			// learner (fix later)
 
 			if (!containsTargetColumn) {
 				throw new InvalidSettingsException(
@@ -373,7 +343,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 			if (!containsXCol || !containsYCol) {
 				throw new InvalidSettingsException("You must select a numeric column for both axis.");
 			}
-			if (m_appendCalculatedTarget.getBooleanValue()) {
+			if (m_settings.getAppendColumn()) {
 				DataColumnSpec calcValsColumnSpec = createCalcValsOutputColumnSpec();
 				DataTableSpec appendSpec = new DataTableSpec(calcValsColumnSpec);
 				DataTableSpec outputSpec = new DataTableSpec(inSpecs[DATA_TABLE_IN_PORT], appendSpec);
@@ -385,45 +355,30 @@ public class MVLRGraphNodeModel extends NodeModel {
 	}
 
 	private DataColumnSpec createCalcValsOutputColumnSpec() {
-		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_colName, DoubleCell.TYPE);
+		DataColumnSpecCreator newColSpecCreator = new DataColumnSpecCreator("Calculated " + m_settings.getColName(), DoubleCell.TYPE);
 		DataColumnSpec newColSpec = newColSpecCreator.createSpec();
 		return newColSpec;
 	}
 
 	@Override
 	protected void saveSettingsTo(final NodeSettingsWO settings) {
-		m_count.saveSettingsTo(settings);
-		m_colName.saveSettingsTo(settings);
-		m_xAxisVarColumn.saveSettingsTo(settings);
-		m_yAxisVarColumn.saveSettingsTo(settings);
-		m_appendCalculatedTarget.saveSettingsTo(settings);
-		m_showAllData.saveSettingsTo(settings);
-		m_showRegressionModel.saveSettingsTo(settings);
-		m_isH2ONode.saveSettingsTo(settings);
+		m_settings.saveSettingsTo(settings);
 	}
 
 	@Override
 	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-		m_count.loadSettingsFrom(settings);
-		m_colName.loadSettingsFrom(settings);
-		m_xAxisVarColumn.loadSettingsFrom(settings);
-		m_yAxisVarColumn.loadSettingsFrom(settings);
-		m_appendCalculatedTarget.loadSettingsFrom(settings);
-		m_showAllData.loadSettingsFrom(settings);
-		m_showRegressionModel.loadSettingsFrom(settings);
-		m_isH2ONode.loadSettingsFrom(settings);
+		m_settings.loadSettingsFrom(settings);
 	}
 
 	@Override
 	protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-		m_count.validateSettings(settings);
-		m_colName.validateSettings(settings);
-		m_xAxisVarColumn.validateSettings(settings);
-		m_yAxisVarColumn.validateSettings(settings);
-		m_appendCalculatedTarget.validateSettings(settings);
-		m_showAllData.validateSettings(settings);
-		m_showRegressionModel.validateSettings(settings);
-		m_isH2ONode.validateSettings(settings);
+		MVLRGraphSettings s = new MVLRGraphSettings();
+		
+		s.loadSettingsFrom(settings);
+		
+		if(s.getColName() == null) {
+			throw new InvalidSettingsException("No target column selected");
+		}
 	}
 
 	@Override
@@ -481,5 +436,9 @@ public class MVLRGraphNodeModel extends NodeModel {
 			FileOutputStream fos = new FileOutputStream(file);
 			modelContent.saveToXML(fos);
 		}
+	}
+	
+	public MVLRGraphSettings getSettings() {
+		return m_settings;
 	}
 }
