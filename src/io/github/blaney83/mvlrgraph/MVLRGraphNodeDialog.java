@@ -83,7 +83,7 @@ public class MVLRGraphNodeDialog extends NodeDialogPane {
 		constraints.gridx = 0;
 		constraints.gridwidth = 2;
 
-		panel.add(new JLabel("Select the two independent variables to model (x, y axes)"), constraints);
+		panel.add(new JLabel("Select the two independent variables to model"), constraints);
 		constraints.gridy++;
 
 		panel.add(m_colSelectionPanel, constraints);
@@ -95,13 +95,13 @@ public class MVLRGraphNodeDialog extends NodeDialogPane {
 		constraints.gridwidth = 1;
 		constraints.gridy++;
 		constraints.gridx = 0;
-		panel.add(new JLabel("Append Column of Calculated Values?"), constraints);
+		panel.add(new JLabel("Append Column of Calculated Values"), constraints);
 		constraints.gridx = 1;
 		panel.add(m_appendColumn, constraints);
 
 		constraints.gridy++;
 		constraints.gridx = 0;
-		panel.add(new JLabel("Plot all real data points?"), constraints);
+		panel.add(new JLabel("Plot all real data points"), constraints);
 		constraints.gridx = 1;
 		panel.add(m_showAllData, constraints);
 		m_showAllData.addActionListener(new ActionListener() {

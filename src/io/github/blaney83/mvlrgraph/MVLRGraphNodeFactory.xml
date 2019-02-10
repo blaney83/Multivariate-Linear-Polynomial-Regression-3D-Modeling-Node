@@ -3,32 +3,37 @@
     <name>MVLRGraph</name>
     
     <shortDescription>
-        This node provides a 3D representation to obtain a visual "closeness of fit" test when provided a co-efficients table output by an upstream multivariate linear regression node.
+        This node provides a 3D representation to obtain a visual "closeness of fit" test when provided a co-efficients table output by an upstream multivariate regression node.
     </shortDescription>
     
     <fullDescription>
-        <intro>Insert long description here...</intro>
+        <intro>The node is intended as a visual aid to check model fit or prevent overfitting. It also serves as a good presentation tool and generally improves
+        basic understanding of relationships between columns/variables in a data set. This node can visualize linear and polynomial regression models between 2 and 9 degrees. &#xD; &#xD; &#xA;</intro><intro> While it is only
+        possible to represent three dimensions in 3D space (x,y,z); this node can make assumptions about other variables to help visualize a model. Currently, this node uses real data values
+        for each point plotted on the 3D plane and, in the model plane, uses the arithmetic mean for variables that are not represented on the x, y, or z plane. 
+        </intro>
         
-                <tab name="Standard Options">
+                <tab name="General Options">
         <option name="Target Column">Select the target column used in the Regression Learner Node (z-axis): </option>
-        <option name="X Variable">Select the first of two variables to plotted on the regression plane (x-axis): </option>
-        <option name="Y Variable">Select the second of two variables to plotted on the regression plane (y-axis): </option>
-        <option name="Append Values?">Append new column with calculated values?</option>
-        <option name="H2O Learner?">Are you using an H2O node?</option>
+        <option name="Select the two independent variables to model(Column Selection)">In the column selection windows, manipulate the names of the data columns until you have exactly two remaining
+        in the right hand container. These will be used as the independent variables when modeling the learned regression equation. The two columns will
+        be represented visually as the "x" and "y" axis variables on the 3D graph. &#xD; &#xD; &#xA; </option><option> IMPORTANT: these columns must have been used as variables in the previous
+        regression node. If you select a column that is in the data column, but is NOT in the coefficients table, then the node will intentially fail when
+        executing. If the node fails, check your selected columns in the right hand side to make sure they match the columns used in your regression node.
+        </option>
+        <option name="Append Column">This option allows you to append a column containing the calculated value of a row, using the regression equation from the 
+        the previous node.
+        </option>
+        <option name="Plot All Real Data Points">Select this option if you want a point on the graph for each row in the data table. If this option is selected
+        you cannot define a specific number of points to display in the next option.
+        </option>
+        <option name="Number of data points to plot">If you do not want all data points to be represented in the graph, you may define a specific number of
+        points to display. These points will be chosen sequentially from the top of the data table moving down.
+        </option>
+        <option name="Display Regression Model">This option allows you to toggle the display of the modeled 3D plane representation of the previous node,
+        essentially leaving a 3D scatter plot of the data points.
+        </option>
         </tab>
-                <tab name="View Options">
-            <option name="short name of first advanced option (like in the dialog)">description of first advanced option</option>
-        </tab>
-        <!-- possibly more options that can also be grouped by tabs -->
-        <!--
-        <tab name="Standard Options">
-            <option name="short name of first option (like in the dialog)">Select the first of two variables to plotted on the regression plane (x-axis): </option>
-            <option name="short name of second option (like in the dialog)">description of second option</option>
-        </tab>
-        <tab name="Advanced Options">
-            <option name="short name of first advanced option (like in the dialog)">description of first advanced option</option>
-        </tab>
-        -->
     </fullDescription>
     
     <ports>
@@ -37,7 +42,6 @@
         <outPort index="0" name="Out-Port name">Outputs the input data table (not the coefficient table).</outPort>
     </ports>    
     <views>
-        <view index="0" name="3D Regression Plot">Description of first view...</view>
-        <!--view index="1" name="name of second view">Description of second view...</view-->
+        <view index="0" name="3D Regression Plot">3-Dimensional Representation of real data points mapped over a planar model of a learned regression equation.</view>
     </views>
 </knimeNode>
