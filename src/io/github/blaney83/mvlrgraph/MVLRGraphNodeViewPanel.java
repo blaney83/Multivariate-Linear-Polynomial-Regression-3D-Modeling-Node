@@ -1,27 +1,21 @@
 package io.github.blaney83.mvlrgraph;
 
 import java.awt.BorderLayout;
+
 import java.awt.Canvas;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Panel;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.swing.JPanel;
 
-import org.jzy3d.analysis.AnalysisLauncher;
-import org.jzy3d.bridge.awt.FrameAWT;
-import org.jzy3d.bridge.swing.FrameSwing;
 import org.jzy3d.chart.Chart;
 import org.jzy3d.chart.ChartLauncher;
 import org.jzy3d.chart.controllers.camera.AbstractCameraController;
-import org.jzy3d.chart.controllers.mouse.camera.ICameraMouseController;
-import org.jzy3d.maths.Rectangle;
-import org.jzy3d.plot3d.rendering.canvas.CanvasAWT;
 
 
 public class MVLRGraphNodeViewPanel extends JPanel {

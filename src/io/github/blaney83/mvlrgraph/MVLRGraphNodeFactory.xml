@@ -8,7 +8,7 @@
     
     <fullDescription>
         <intro>The node is intended as a visual aid to check model fit or prevent overfitting. It also serves as a good presentation tool and generally improves
-        basic understanding of relationships between columns/variables in a data set. This node can visualize linear and polynomial regression models between 2 and 9 degrees. &#xD; &#xD; &#xA;</intro><intro> While it is only
+        basic understanding of relationships between columns/variables in a data set. This node can visualize linear and polynomial regression models between 2 and 9 degrees. While it is only
         possible to represent three dimensions in 3D space (x,y,z); this node can make assumptions about other variables to help visualize a model. Currently, this node uses real data values
         for each point plotted on the 3D plane and, in the model plane, uses the arithmetic mean for variables that are not represented on the x, y, or z plane. 
         </intro>
@@ -17,7 +17,7 @@
         <option name="Target Column">Select the target column used in the Regression Learner Node (z-axis): </option>
         <option name="Select the two independent variables to model(Column Selection)">In the column selection windows, manipulate the names of the data columns until you have exactly two remaining
         in the right hand container. These will be used as the independent variables when modeling the learned regression equation. The two columns will
-        be represented visually as the "x" and "y" axis variables on the 3D graph. &#xD; &#xD; &#xA; </option><option> IMPORTANT: these columns must have been used as variables in the previous
+        be represented visually as the "x" and "y" axis variables on the 3D graph. *IMPORTANT:* these columns must have been used as variables in the previous
         regression node. If you select a column that is in the data column, but is NOT in the coefficients table, then the node will intentially fail when
         executing. If the node fails, check your selected columns in the right hand side to make sure they match the columns used in your regression node.
         </option>
