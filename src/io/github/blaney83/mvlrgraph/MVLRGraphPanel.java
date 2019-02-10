@@ -28,26 +28,15 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 	private CalculatedPoint[] m_calcPoints;
 	private boolean m_showRegModel;
 
-	public MVLRGraphPanel(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName,
-			final String xName, final String yName, final boolean showModel) {
-		m_termSet = termSet;
-		m_calcPoints = calcPoints;
-		m_targetName = targetName;
-		m_xName = xName;
-		m_yName = yName;
-		m_showRegModel = showModel;
-		// setPreferredSize(new Dimension(width, height));
+	public MVLRGraphPanel(final MVLRGraphNodeModel nodeModel) {
+		m_termSet = nodeModel.m_termSet;
+		m_calcPoints = nodeModel.m_calcPoints;
+		m_targetName = nodeModel.getSettings().getColName();
+		m_xName = nodeModel.getSettings().getXAxisVarColumn();
+		m_yName = nodeModel.getSettings().getYAxisVarColumn();
+		m_showRegModel = nodeModel.getSettings().getShowRegModel();
 	}
 
-	public void updateView(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName,
-			final String xName, final String yName, final boolean showModel) {
-		m_termSet = termSet;
-		m_calcPoints = calcPoints;
-		m_targetName = targetName;
-		m_xName = xName;
-		m_yName = yName;
-		m_showRegModel = showModel;
-	}
 
 	@Override
 	public void init() {
@@ -55,20 +44,19 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 		FunctionTerm yTerm = new FunctionTerm();
 		int count = 0;
 		for (FunctionTerm fnTerm : m_termSet) {
+			if(count == 2) {
+				break;
+			}
 			if (fnTerm.getVarName() != null) {
-//				System.out.println("FN" + count + " " + fnTerm.getVarName() + " val: " +
-////						fnTerm.getValue() + 
-//						" coeff: " + fnTerm.getCoefficient() + " exp: " + fnTerm.getExponent() + " f(1): "
-//						+ fnTerm.evaluateTerm(1) + " lower bound: " + fnTerm.getLowerBound() + " upper bound : "
-//						+ fnTerm.getUpperBound() + " const: " + fnTerm.getIsConstant());
 				if (fnTerm.getVarName().equals(m_xName)) {
 					xTerm = fnTerm;
+					count++;
 				}
 				if (fnTerm.getVarName().equals(m_yName)) {
 					yTerm = fnTerm;
+					count++;
 				}
 			}
-			count++;
 		}
 
 		Mapper mapper = new Mapper() {
