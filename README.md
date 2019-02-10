@@ -1,9 +1,14 @@
 # Multivariate Linear/Polynomial Regression 3D Model
 This node provides a 3D representation to obtain a visual "closeness of fit" test when provided a co-efficients table output by an upstream multivariate regression node.
 
+![Regression Model](regressionModel.mp4)
+
 The node is intended as a visual aid to check model fit or prevent overfitting. It also serves as a good presentation tool and generally improves basic understanding of relationships between columns/variables in a data set. This node can visualize linear and polynomial regression models between 2 and 9 degrees. Note while it is only possible to represent three dimensions in 3D space (x,y,z); this node can make assumptions about other variables to help visualize a model. Currently, this node uses real data values for each point plotted on the 3D plane and, in the model plane, uses the arithmetic mean for variables that are not represented on the x, y, or z plane. 
 
 ## General Options
+
+![Configuration Dialog Example](dialog.PNG)
+
 ### Target Column
 Select the target column used in the Regression Learner Node (z-axis)
 ### Select the two independent variables to model(Column Selection)
@@ -19,6 +24,8 @@ Select this option if you want a point on the graph for each row in the data tab
 
 ### Number of data points to plot
 If you do not want all data points to be represented in the graph, you may define a specific number of points to display. These points will be chosen sequentially from the top of the data table moving down.
+
+![Scatter Plot](scatter.mp4)
 
 ### Display Regression Model 
 This option allows you to toggle the display of the modeled 3D plane representation of the previous node, essentially leaving a 3D scatter plot of the data points.
@@ -41,6 +48,7 @@ Current point scheme is calculated with the percent error of each point to its m
 ## Ports
 
 ### In-Ports
+![Coefficient Table Example](Poly_Regress.PNG)
 #### 1) Regression Co-efficients Table
 Takes in the output coefficient table produced by a regression node (linear/polynomial).
 #### 2) Source Data Table
@@ -53,3 +61,5 @@ Outputs the input data table (not the coefficient table) with an optional column
 ## Views
 ### 3D Regression Plot
 3-Dimensional Representation of real data points mapped over a planar model of a learned regression equation.
+
+![Execution Example](exampleExecution.mp4)

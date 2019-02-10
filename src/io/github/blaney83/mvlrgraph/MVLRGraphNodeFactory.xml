@@ -39,7 +39,7 @@
     <ports>
         <inPort index="0" name="Regression Co-efficients Table">Takes in the output coefficient table produced by a regression node (linear/polynomial).</inPort>
         <inPort index="1" name="Source Data Table">Takes in the data corresponding to the regression function produced in the regression node. Columns must match the output coeffiecients columns. Can either take the training data table (which was porocessed by the regression node) or the test data (for a visual representation of function "fitness").</inPort>
-        <outPort index="0" name="Out-Port name">Outputs the input data table (not the coefficient table).</outPort>
+        <outPort index="0" name="Data Table (Optional Appended Column)">Outputs the input data table (not the coefficient table) with an optional column of target values calculated with the regression equation provided. This option can be toggled in the configuration dialog.</outPort>
     </ports>    
     <views>
         <view index="0" name="3D Regression Plot">3-Dimensional Representation of real data points mapped over a planar model of a learned regression equation.</view>
