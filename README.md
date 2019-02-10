@@ -62,4 +62,4 @@ Outputs the input data table (not the coefficient table) with an optional column
 ### 3D Regression Plot
 3-Dimensional Representation of real data points mapped over a planar model of a learned regression equation.
 
-![Execution Example](exampleExecution.mp4)
+![Execution Example](extendedEx.mp4)
