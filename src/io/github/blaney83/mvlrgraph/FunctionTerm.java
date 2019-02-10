@@ -2,7 +2,6 @@ package io.github.blaney83.mvlrgraph;
 
 import java.io.IOException;
 
-import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnDomain;
 import org.knime.core.data.DataColumnDomainCreator;
 import org.knime.core.data.DoubleValue;
