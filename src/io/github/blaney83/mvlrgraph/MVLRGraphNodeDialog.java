@@ -46,14 +46,17 @@ public class MVLRGraphNodeDialog extends NodeDialogPane {
 	private final ColumnSelectionComboxBox m_colName = new ColumnSelectionComboxBox(DoubleValue.class);
 	
 	private final DataColumnSpecFilterPanel m_colSelectionPanel = new DataColumnSpecFilterPanel();
+	
 	private JCheckBox m_appendColumn = new JCheckBox();
-
 	private JCheckBox m_showRegModel = new JCheckBox();
 	private JCheckBox m_showAllData = new JCheckBox();
 
 	private final JSpinner m_count = new JSpinner(new SpinnerNumberModel(MVLRGraphNodeModel.DEFAULT_COUNT, 1, Integer.MAX_VALUE, 1));
 	
 	protected MVLRGraphNodeDialog() {
+
+		m_colSelectionPanel.setIncludeTitle("X and Y Axis Variables (exactly 2)");
+		m_colSelectionPanel.setExcludeTitle("Set to Mean/Excluded from Model");
 
 		JPanel panel = new JPanel(new GridBagLayout());
 
@@ -195,59 +198,4 @@ public class MVLRGraphNodeDialog extends NodeDialogPane {
 	}
 }
 
-// Old default dialog config
-//
-//addDialogComponent(new DialogComponentColumnNameSelection(
-//		new SettingsModelColumnName(MVLRGraphNodeModel.CFGKEY_COL_NAME, ""),
-//		"Select the target column used in the Regression Learner Node (z-axis): ",
-//		MVLRGraphNodeModel.DATA_TABLE_IN_PORT, DoubleValue.class));
-//
-//
-//DialogComponentColumnFilter2 dialogCompFilter2 = new DialogComponentColumnFilter2(
-//		new SettingsModelColumnFilter2(MVLRGraphNodeModel.CFGKEY_COL_FILTER, DoubleValue.class), MVLRGraphNodeModel.DATA_TABLE_IN_PORT);
-//dialogCompFilter2.setIncludeTitle("Model Variables (max 2)");
-//dialogCompFilter2.setExcludeTitle("Excluded from Model/Use Mean Value Approx.");
-//addDialogComponent(dialogCompFilter2);
-//
-//addDialogComponent(new DialogComponentColumnNameSelection(
-//		new SettingsModelColumnName(MVLRGraphNodeModel.CFGKEY_X_AXIS_VAR_COLUMN, ""),
-//		"Select the first of two variables to plotted on the regression plane (x-axis): ",
-//		MVLRGraphNodeModel.DATA_TABLE_IN_PORT, DoubleValue.class));
-//
-//addDialogComponent(new DialogComponentColumnNameSelection(
-//		new SettingsModelColumnName(MVLRGraphNodeModel.CFGKEY_Y_AXIS_VAR_COLUMN, ""),
-//		"Select the second of two variables to plotted on the regression plane (y-axis): ",
-//		MVLRGraphNodeModel.DATA_TABLE_IN_PORT, DoubleValue.class));
-//
-//addDialogComponent(new DialogComponentNumber(
-//        new SettingsModelIntegerBounded(
-//            MVLRGraphNodeModel.CFGKEY_COUNT,
-//            MVLRGraphNodeModel.DEFAULT_COUNT,
-//            1, Integer.MAX_VALUE),
-//            "Number of rows to plot over regression plane: ",1,5));
-//
-//addDialogComponent(new DialogComponentBoolean(
-//		new SettingsModelBoolean(
-//				MVLRGraphNodeModel.CFGKEY_SHOW_ALL,
-//				MVLRGraphNodeModel.DEFAULT_SHOW_ALL_DATA), 
-//				"Plot all real data points?"));
-//
-//addDialogComponent(new DialogComponentBoolean(
-//		new SettingsModelBoolean(
-//				MVLRGraphNodeModel.CFGKEY_SHOW_REG_MODEL,
-//				MVLRGraphNodeModel.DEFAULT_SHOW_REG_MODEL), 
-//				"Graph regression model? (no will just show data points)"));
-//
-//addDialogComponent(new DialogComponentBoolean(
-//		new SettingsModelBoolean(
-//				MVLRGraphNodeModel.CFGKEY_APPEND_CALCULATED_TARGET,
-//				MVLRGraphNodeModel.DEFAULT_APPEND_CALCULATED_TARGET), 
-//				"Append new column with calculated values?"));
-//
-//
-//addDialogComponent(new DialogComponentBoolean(
-//		new SettingsModelBoolean(
-//				MVLRGraphNodeModel.CFGKEY_IS_H2O_NODE,
-//				MVLRGraphNodeModel.DEFAULT_IS_H2O_NODE), 
-//				"Are you using an H2O learner?"));
 

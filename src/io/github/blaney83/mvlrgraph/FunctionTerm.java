@@ -2,8 +2,11 @@ package io.github.blaney83.mvlrgraph;
 
 import java.io.IOException;
 
+import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnDomain;
+import org.knime.core.data.DataColumnDomainCreator;
 import org.knime.core.data.DoubleValue;
+import org.knime.core.data.def.DoubleCell;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.ModelContentRO;
 import org.knime.core.node.ModelContentWO;
@@ -15,6 +18,8 @@ public class FunctionTerm {
 	private static String CFGKEY_TERM_EXP = "termExp";
 	private static String CFGKEY_TERM_CONSTANT = "isConst";
 	private static String CFGKEY_TERM_VALUE = "termVal";
+	private static String CFGKEY_TERM_LOWER_BOUND = "termLowerBound";
+	private static String CFGKEY_TERM_UPPER_BOUND = "termUpperBound";
 
 	private String varName;
 	private double coefficient;
@@ -104,7 +109,8 @@ public class FunctionTerm {
 		modelContent.addInt(CFGKEY_TERM_EXP, this.exponent);
 		modelContent.addBoolean(CFGKEY_TERM_CONSTANT, this.isConstant);
 		modelContent.addDouble(CFGKEY_TERM_VALUE, this.value);
-		domain.save(modelContent);
+		modelContent.addDouble(CFGKEY_TERM_LOWER_BOUND, this.getLowerBound());
+		modelContent.addDouble(CFGKEY_TERM_UPPER_BOUND, this.getUpperBound());
 	}
 
 	@SuppressWarnings("static-access")
@@ -115,7 +121,10 @@ public class FunctionTerm {
 		this.exponent = modelContent.getInt(CFGKEY_TERM_EXP);
 		this.isConstant = modelContent.getBoolean(CFGKEY_TERM_CONSTANT);
 		this.value = modelContent.getDouble(CFGKEY_TERM_VALUE);
-		domain.load(modelContent);
+		DataColumnDomainCreator loadedDomainCreator = new DataColumnDomainCreator();
+		loadedDomainCreator.setLowerBound(new DoubleCell(modelContent.getDouble(CFGKEY_TERM_LOWER_BOUND)));
+		loadedDomainCreator.setUpperBound(new DoubleCell(modelContent.getDouble(CFGKEY_TERM_UPPER_BOUND)));
+		this.domain = loadedDomainCreator.createDomain();
 		}catch (InvalidSettingsException e) {
 			e.addSuppressed(new IOException("There was a problem loading the internal state of this node. Please reset the node and execute again."));
 		}

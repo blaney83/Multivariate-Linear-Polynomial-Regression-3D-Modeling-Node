@@ -14,6 +14,7 @@ public class CalculatedPoint {
 	private final static String CFGKEY_Z_VAL = "zVal";
 	private final static String CFGKEY_ROW_KEY = "rowKey";
 	private final static String CFGKEY_MISSING = "isMissing";
+	private final static String CFGKEY_PERC_ERROR = "percError";
 
 	private double xValue;
 	private double yValue;
@@ -72,6 +73,7 @@ public class CalculatedPoint {
 		modelContent.addDouble(CFGKEY_Z_VAL, this.zValue);
 		modelContent.addRowKey(CFGKEY_ROW_KEY, this.rowKey);
 		modelContent.addBoolean(CFGKEY_MISSING, this.isMissing);
+		modelContent.addDouble(CFGKEY_PERC_ERROR, this.percentError);
 	}
 
 	public void loadFrom(final ModelContentRO modelContent) {
@@ -81,6 +83,7 @@ public class CalculatedPoint {
 			this.zValue = modelContent.getDouble(CFGKEY_Z_VAL);
 			this.rowKey = modelContent.getRowKey(CFGKEY_ROW_KEY);
 			this.isMissing = modelContent.getBoolean(CFGKEY_MISSING);
+			this.percentError = modelContent.getDouble(CFGKEY_PERC_ERROR);
 		} catch (InvalidSettingsException e) {
 			e.addSuppressed(new IOException(
 					"There was a problem loading the internal state of this node. Please reset the node and execute again."));

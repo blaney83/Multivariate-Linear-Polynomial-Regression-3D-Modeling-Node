@@ -32,31 +32,17 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	private static final int HEIGHT = 650;
 	// graph instance
 	private MVLRGraphPanel graphPanel;
-	//panel internal fields
-	private String m_targetName;
-	private String m_xName;
-	private String m_yName;
-
-	// external view data
-	private Set<FunctionTerm> m_termSet;
-	private CalculatedPoint[] m_calcPoints;
-	private boolean m_showRegModel;
+	private TitlePanel titlePanel;
 
 	public MVLRGraphNodeViewPanel(final MVLRGraphNodeModel nodeModel){
-		this.m_termSet = nodeModel.m_termSet;
-		this.m_calcPoints = nodeModel.m_calcPoints;
-		this.m_targetName = nodeModel.m_settings.getColName();
-		this.m_xName = nodeModel.m_settings.getXAxisVarColumn();
-		this.m_yName = nodeModel.m_settings.getYAxisVarColumn();
-		this.m_showRegModel = nodeModel.m_settings.getShowRegModel();
-
+		
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		setLayout(new BorderLayout());
 
-		TitlePanel titlePanel = new TitlePanel(MVLRGraphNodeView.DEFAULT_GRAPH_TITLE);
+		titlePanel = new TitlePanel(MVLRGraphNodeView.DEFAULT_GRAPH_TITLE);
 		add(titlePanel, BorderLayout.NORTH);
 
-		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName, m_showRegModel);
+		graphPanel = new MVLRGraphPanel(nodeModel);
 
 		graphPanel.init();
 		Chart chart = graphPanel.getChart();
@@ -70,16 +56,17 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-
 	}
 
-	public void updateView(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName, final String xName, final String yName) {
-		this.m_termSet = termSet;
-		this.m_calcPoints = calcPoints;
-		this.m_targetName = targetName;
-		this.m_xName = xName;
-		this.m_yName = yName;
-//		graphPanel.updateView(termSet, calcPoints, targetName, xName, yName);
+	public void updateView(final MVLRGraphNodeModel nodeModel) {
+		
+		graphPanel = new MVLRGraphPanel(nodeModel);
+
+		graphPanel.init();
+		Chart chart = graphPanel.getChart();
+		chart.addController((AbstractCameraController)ChartLauncher.configureControllers(chart, "", true, false));
+
+		add((Canvas)chart.getCanvas(), BorderLayout.CENTER);
 	}
 
 	private final class TitlePanel extends JPanel {

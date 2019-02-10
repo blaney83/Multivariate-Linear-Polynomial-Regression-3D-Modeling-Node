@@ -56,13 +56,15 @@ import org.knime.core.node.NodeSettingsWO;
 // X add column picker and make it state dependent (live reload, exclusive)
 // X add yes/no show regression model graph
 // ON HOLD add view tab to dialog
-// enable view loading
-// make sure update models all work
-// update factory.xml
-// complete read me
+// X  enable view loading
+// X make sure update models all work
+// X update factory.xml
+// X re-write config method
+// X complete read me
 // OPTIONAL:
-// enable selection
-//*******re-write config method
+//NOT NOW enable selection
+// export image
+
 public class MVLRGraphNodeModel extends NodeModel {
 	
 	MVLRGraphSettings m_settings = new MVLRGraphSettings();
@@ -84,7 +86,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 	// view options
 	// color rainbow- under, on, over
 	// opacity of planar field
-	//point size
+	// point size
 
 	// default settings fields
 	static final int DEFAULT_COUNT = 100;
@@ -249,10 +251,7 @@ public class MVLRGraphNodeModel extends NodeModel {
 
 	@Override
 	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs) throws InvalidSettingsException {
-		
-		if(m_settings.getColName() == null) {
-			throw new InvalidSettingsException("No target column selected");
-		}
+
 		
 		if (inSpecs[COEFFICIENT_IN_PORT] == null || inSpecs[DATA_TABLE_IN_PORT] == null) {
 			throw new InvalidSettingsException(
@@ -262,6 +261,10 @@ public class MVLRGraphNodeModel extends NodeModel {
 					&& !inSpecs[COEFFICIENT_IN_PORT].containsCompatibleType(DoubleValue.class)) {
 				throw new InvalidSettingsException(
 						"The coefficient table provided does not meet the requirements for this node. It should contain at least a column containing the row keys (variables of the regression equation) in the associated data column and a numeric coefficients column.");
+			}
+			
+			if(m_settings.getColName() == null) {
+				throw new InvalidSettingsException("No target column selected");
 			}
 			// checking input ind. 0
 			boolean hasCoefficientColumn = false;
