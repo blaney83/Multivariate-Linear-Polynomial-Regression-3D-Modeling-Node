@@ -45,37 +45,24 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	public MVLRGraphNodeViewPanel(final MVLRGraphNodeModel nodeModel){
 		this.m_termSet = nodeModel.m_termSet;
 		this.m_calcPoints = nodeModel.m_calcPoints;
-		this.m_targetName = nodeModel.m_colName.getStringValue();
-		this.m_xName = nodeModel.m_xAxisVarColumn.getStringValue();
-		this.m_yName = nodeModel.m_yAxisVarColumn.getStringValue();
-		this.m_showRegModel = nodeModel.m_showRegressionModel.getBooleanValue();
+		this.m_targetName = nodeModel.m_settings.getColName();
+		this.m_xName = nodeModel.m_settings.getXAxisVarColumn();
+		this.m_yName = nodeModel.m_settings.getYAxisVarColumn();
+		this.m_showRegModel = nodeModel.m_settings.getShowRegModel();
 
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		setLayout(new BorderLayout());
 
 		TitlePanel titlePanel = new TitlePanel(MVLRGraphNodeView.DEFAULT_GRAPH_TITLE);
 		add(titlePanel, BorderLayout.NORTH);
-//		if (MVLRGraphNodeView.DEFAULT_GRAPH_EQUATION) {
-//			EquationPanel eqPanel = new EquationPanel(nodeModel.m_termSet, m_targetName,
-//					m_xName, m_yName);
-//			add(eqPanel, BorderLayout.SOUTH);
-//		}
+
 		graphPanel = new MVLRGraphPanel(m_termSet, m_calcPoints, m_targetName, m_xName, m_yName, m_showRegModel);
-		
-//		try {
-//			AnalysisLauncher.open(graphPanel);
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		Rectangle rect = new Rectangle(500, 500);
+
 		graphPanel.init();
 		Chart chart = graphPanel.getChart();
 		chart.addController((AbstractCameraController)ChartLauncher.configureControllers(chart, "", true, false));
 
-//		JPanel chartPanel = new JPanel();
-//		CanvasAWT chartCanvas = new CanvasAWT(chart.getFactory(), chart.getScene(), chart.getQuality());
-//		chartPanel.add(chartCanvas);
+
 		add((Canvas)chart.getCanvas(), BorderLayout.CENTER);
 
 	}
@@ -83,7 +70,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 		super.paint(g);
-//		graphPanel.u();
+
 	}
 
 	public void updateView(final Set<FunctionTerm> termSet, final CalculatedPoint[] calcPoints, final String targetName, final String xName, final String yName) {
@@ -92,7 +79,7 @@ public class MVLRGraphNodeViewPanel extends JPanel {
 		this.m_targetName = targetName;
 		this.m_xName = xName;
 		this.m_yName = yName;
-		graphPanel.updateView(termSet, calcPoints, targetName, xName, yName);
+//		graphPanel.updateView(termSet, calcPoints, targetName, xName, yName);
 	}
 
 	private final class TitlePanel extends JPanel {

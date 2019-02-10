@@ -63,21 +63,14 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 //						+ fnTerm.getUpperBound() + " const: " + fnTerm.getIsConstant());
 				if (fnTerm.getVarName().equals(m_xName)) {
 					xTerm = fnTerm;
-				} else if (fnTerm.getVarName().equals(m_yName)) {
+				}
+				if (fnTerm.getVarName().equals(m_yName)) {
 					yTerm = fnTerm;
 				}
 			}
 			count++;
 		}
-		// the problem is that all of the values are currently set to constant and are
-		// being evaluated below as 0
-		// because I coded them to be evaluated as 0. need to either eliminate isConst
-		// and check against name, fix the
-		// is const auto set with value, or re-write the evaluate method so that it can
-		// be passed a check.
 
-		// also- need to give intercept a domain- min=self, max=self
-		// goodnight
 		Mapper mapper = new Mapper() {
 			@Override
 			public double f(double x, double y) {
@@ -86,49 +79,24 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 					if (fnTerm.getVarName() != null) {
 						if (!fnTerm.getVarName().equals(m_xName) && !fnTerm.getVarName().equals(m_yName)
 								&& fnTerm.getIsConstant()) {
-//            				System.out.println(fnTerm.getValue());
-//            				System.out.println(fnTerm.evaluateTerm(0));
-//            				System.out.println(z);
-//            				System.out.println("should fire for constants");
 							z += fnTerm.evaluateTerm(0);
 						} else if (fnTerm.getVarName().equals(m_xName) && !fnTerm.getIsConstant()) {
-//            				System.out.println(fnTerm.evaluateTerm(x));
-//            				System.out.println(fnTerm.evaluateTerm(0));
-//            				System.out.println(z);
-//            				System.out.println("should fire for x");
 							z += fnTerm.evaluateTerm(x);
 						} else if (fnTerm.getVarName().equals(m_yName) && !fnTerm.getIsConstant()) {
-//            				System.out.println(fnTerm.evaluateTerm(y));
-//            				System.out.println(fnTerm.evaluateTerm(0));
-//            				System.out.println(z);
-//            				System.out.println("should fire for y");
 							z += fnTerm.evaluateTerm(y);
 						}
 					}
 				}
-//    			System.out.println(z);
 				return z;
 			}
 		};
-		double xMin = -100;
-		double xMax = 100;
 
-		double yMin = -100;
-		double yMax = 100;
+		double xMin = xTerm.getLowerBound();
+		double xMax = xTerm.getUpperBound();
 
-		if (xTerm != null) {
-			xMin = xTerm.getLowerBound();
-			xMax = xTerm.getUpperBound();
-		}
-		if (yTerm != null) {
-			yMin = yTerm.getLowerBound();
-			yMax = yTerm.getUpperBound();
-		}
+		double yMin = yTerm.getLowerBound();
+		double yMax = yTerm.getUpperBound();
 
-//		System.out.println(xMax);
-//		System.out.println(xMin);
-//		System.out.println(yMax);
-//		System.out.println(yMin);
 		Range xRange = new Range((float) xMin, (float) xMax);
 		Range yRange = new Range((float) yMin, (float) yMax);
 
@@ -154,10 +122,7 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 		float z = 0;
 
 		for (int i = 0; i < m_calcPoints.length; i++) {
-//			System.out.println(m_calcPoints[i].getXValue());
-//			System.out.println(m_calcPoints[i].getYValue());
-//			System.out.println(m_calcPoints[i].getZValue());
-//			System.out.println(m_calcPoints[i].getPercentError());
+
 			x = (float) m_calcPoints[i].getXValue();
 			y = (float) m_calcPoints[i].getYValue();
 			z = (float) m_calcPoints[i].getZValue();
@@ -179,7 +144,6 @@ public class MVLRGraphPanel extends AbstractAnalysis {
 
 		Scatter scatter = new Scatter(points, colors);
 		scatter.setWidth(5);
-//        chart = AWTChartComponentFactory.chart(Quality.Advanced, "newt");
 		chart.getScene().getGraph().add(scatter);
 		chart.getAxeLayout().setXAxeLabel(m_xName);
 		chart.getAxeLayout().setYAxeLabel(m_yName);
